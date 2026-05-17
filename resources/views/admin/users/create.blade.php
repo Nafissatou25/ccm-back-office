@@ -1,0 +1,60 @@
+@extends('layouts.app')
+
+@section('title', 'Créer un utilisateur')
+
+@section('content')
+
+<div class="page-header">
+    <h3 class="page-title">Créer un utilisateur</h3>
+</div>
+
+<div class="card">
+    <div class="card-body">
+
+        <form method="POST" action="{{ route('admin.users.store') }}">
+            @csrf
+
+            <div class="row">
+
+                {{-- NAME --}}
+                <div class="col-md-6 mb-3">
+                    <label>Nom</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+
+                {{-- EMAIL --}}
+                <div class="col-md-6 mb-3">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+
+                {{-- PASSWORD --}}
+                <div class="col-md-6 mb-3">
+                    <label>Mot de passe</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+
+                {{-- ROLE --}}
+                <div class="col-md-6 mb-3">
+                    <label>Rôle</label>
+                    <select name="role_id" class="form-control" required>
+                        @foreach($roles as $role)
+                            <option value="{{ $role->id }}">
+                                {{ $role->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+            </div>
+
+            <button class="btn btn-primary">
+                Créer
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+@endsection

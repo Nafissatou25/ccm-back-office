@@ -1,0 +1,44 @@
+.navbar.default-layout,
+.navbar-menu-wrapper {
+    background: #2d2961 !important;
+}
+
+.sidebar,
+.sidebar .sidebar-brand-wrapper {
+    background: #2d2961 !important;
+}
+/* ===== ZONE LOGO GAUCHE ===== */
+
+.navbar-brand-wrapper,
+.sidebar .sidebar-brand-wrapper {
+    background-color: #2d2961 !important;
+}
+
+
+/* Texte sidebar */
+.sidebar .nav .nav-item .nav-link {
+    color: #ffff !important;
+}
+
+/* Icônes sidebar */
+.sidebar .nav .nav-item .nav-link i {
+    color: #ffff !important;
+}
+
+
+/* Icône menu hamburger */
+.navbar-toggler .mdi-menu {
+    color: white !important;
+    font-size: 1.3rem !important;
+}
+
+.sidebar .nav .nav-item.active > .nav-link {
+    background: #ffffff !important;
+    color: #2d2961 !important;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.sidebar .nav .nav-item.active > .nav-link i {
+    color: #2d2961 !important;
+}
