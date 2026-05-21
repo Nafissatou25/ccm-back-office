@@ -26,6 +26,8 @@
                             <th>Nom</th>
                             <th>Email</th>
                             <th>Rôle</th>
+                            <th>Agence</th>
+                            <th>Unité</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -33,13 +35,30 @@
                     <tbody>
                         @foreach($users as $user)
                             <tr>
+
+                                {{-- ID --}}
                                 <td><strong>#{{ $user->id }}</strong></td>
 
+                                {{-- NAME --}}
                                 <td>{{ $user->name }}</td>
+
+                                {{-- EMAIL --}}
                                 <td>{{ $user->email }}</td>
 
+                                {{-- ROLE --}}
                                 <td>{{ $user->role?->name ?? '-' }}</td>
 
+                                {{-- AGENCY --}}
+                                <td>
+                                    {{ $user->agency?->name ?? '—' }}
+                                </td>
+
+                                {{-- UNIT --}}
+                                <td>
+                                    {{ $user->unit?->name ?? '—' }}
+                                </td>
+
+                                {{-- ACTIONS --}}
                                 <td>
                                     <a href="{{ route('admin.users.edit', $user) }}"
                                        class="btn btn-sm btn-warning">

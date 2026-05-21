@@ -6,54 +6,81 @@ use App\Models\Ticket;
 
 class TicketActionService
 {
-    public static function allowedActions(Ticket $ticket): array
-    {
-        return match ($ticket->status) {
+    public static function allowedActions(Ticket $ticket, $user): array
+{
+    $role = strtoupper($user->role?->name);
 
-            // Ticket ouvert
-            'OPEN', 'REOPENED', 'REJECTED' => [
-                'assign',
-                'transfer',
-                'start',
-                'comment',
-                'document',
-            ],
+    $actions = match ($ticket->status) {
 
-            // Ticket assigné ou transféré
-            'ASSIGNED', 'TRANSFERRED', 'ASSIGNED_TO_TECHNICIANS' => [
-                'transfer',
-                'start',
-                'comment',
-                'document',
-            ],
+        'OPEN', 'REOPENED', 'REJECTED' => [
+            'comment',
+            'document',
+            'assign',
+            'transfer',
+            'start',
+        ],
 
-            // Ticket en cours
-            'IN_PROGRESS' => [
-                'comment',
-                'document',
-                'resolve',
-                'transfer',
-            ],
+        'ASSIGNED', 'TRANSFERRED', 'ASSIGNED_TO_TECHNICIANS' => [
+            'comment',
+            'document',
+            'transfer',
+            'start',
+        ],
 
-            // Ticket résolu
-            'RESOLVED' => [
-                'close',
-                'reopen',
-                'comment',
-                'document',
-            ],
+        'IN_PROGRESS' => [
+            'comment',
+            'document',
+            'resolve',
+            'hold',
+        ],
 
-            // Ticket clôturé
-            'CLOSED' => [
-                'reopen',
-            ],
+        'ON_HOLD' => [
+            'comment',
+            'document',
+            'resume',
+        ],
 
-            default => [],
-        };
+        'RESOLVED' => [
+            'comment',
+            'document',
+            'close',
+            'reopen',
+        ],
+
+        'CLOSED' => [
+            'reopen',
+        ],
+
+        default => [],
+    };
+
+    // 🔥 TECHNICIAN restrictions
+    if ($role === 'TECHNICIAN') {
+        $actions = array_diff($actions, [
+            'transfer',
+            'assign',
+            'close',
+            'reopen',
+        ]);
     }
 
-    public static function can(Ticket $ticket, string $action): bool
-    {
-        return in_array($action, self::allowedActions($ticket));
+    // 🔥 SUPERVISOR restrictions
+    if ($role === 'SUPERVISOR') {
+        $actions = array_diff($actions, [
+            'close',
+            'reopen',
+        ]);
     }
+
+    // 🔥 CUSTOMER SERVICE FULL LOCKDOWN
+    if ($role === 'CUSTOMER_SERVICE') {
+        $actions = array_diff($actions, [
+            'assign',
+            'hold',
+            'resume'
+        ]);
+    }
+
+    return array_values($actions);
+}
 }

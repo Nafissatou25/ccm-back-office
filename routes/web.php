@@ -5,7 +5,8 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TicketCommentController;
 use App\Http\Controllers\TicketDocumentController;
-use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\DashboardController;
+
 
 
 /*
@@ -23,12 +24,28 @@ Route::prefix('admin')
     ->middleware(['auth'])
     ->group(function () {
 
-        Route::get('/dashboard', [DashboardController::class, 'index'])
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])
             ->name('dashboard');
 
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
-
+        Route::resource('units', \App\Http\Controllers\Admin\UnitController::class);
+        Route::resource('agencies', \App\Http\Controllers\Admin\AgencyController::class);
+        Route::resource('types', \App\Http\Controllers\Admin\TypeController::class);
+        Route::resource('slaRules', \App\Http\Controllers\Admin\SlaRuleController::class);
     });
+
+    /*
+|--------------------------------------------------------------------------
+| USER DASHBOARD
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -87,6 +104,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::patch('/tickets/{ticket}/transfer', [TicketController::class, 'transfer'])
         ->name('tickets.transfer');
+    
+    Route::patch('/tickets/{ticket}/hold', [TicketController::class, 'hold'])
+    ->name('tickets.hold');
+
+    Route::patch('/tickets/{ticket}/resume', [TicketController::class, 'resume'])
+    ->name('tickets.resume');
 
     /*
     | Comments & documents

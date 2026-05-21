@@ -15,4 +15,9 @@ class SlaRule extends Model
         'resolution_time',
         'is_active'
     ];
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
 }

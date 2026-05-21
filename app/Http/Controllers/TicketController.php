@@ -55,7 +55,7 @@ class TicketController extends Controller
     $user = auth()->user();
     $role = strtolower($user->role?->name ?? '');
 
-if (!in_array($role, ['manager', 'customer service', 'supervisor'])) {
+if (!in_array($role, ['manager', 'customer_service', 'supervisor'])) {
     abort(403);
 }
 
@@ -83,7 +83,7 @@ if (!in_array($role, ['manager', 'customer service', 'supervisor'])) {
          $user = auth()->user();
     $role = strtolower($user->role?->name ?? '');
 
-    if (!in_array($role, ['manager', 'customer service', 'supervisor'])) {
+    if (!in_array($role, ['manager', 'customer_service', 'supervisor'])) {
         abort(403, 'Accès interdit');
     }
         $data = $request->validate([
@@ -183,7 +183,12 @@ if (!in_array($role, ['manager', 'customer service', 'supervisor'])) {
 
 public function transfer(Request $request, Ticket $ticket)
 {
-    
+    $role = strtoupper(auth()->user()->role?->name);
+
+if ($role === 'TECHNICIAN') {
+
+    abort(403, 'Action non autorisée');
+}
     $request->validate([
     'user_id' => 'required|exists:users,id'
 ]);
@@ -214,19 +219,41 @@ TicketActivity::create([
     return back()->with('success', 'Ticket transféré avec succès');
 }    
 
-public function reopen(Ticket $ticket)
+public function reopen(Request $request, Ticket $ticket)
 {
+    $request->validate([
+        'reason' => 'required|string|min:5',
+        'attachment' => 'nullable|file|max:5120'
+    ]);
+
+    // if ($ticket->status === 'CLOSED') {
+    //     abort(403, 'Impossible de rouvrir un ticket clôturé');
+    // }
+
+    if (!in_array(strtoupper(auth()->user()->role?->name), ['CUSTOMER_SERVICE', 'SUPERVISOR'])) {
+        abort(403);
+    }
+
+    $path = null;
+
+    if ($request->hasFile('attachment')) {
+        $path = $request->file('attachment')
+            ->store('ticket-reopens', 'public');
+    }
+
     $ticket->update([
         'status' => 'REOPENED'
     ]);
 
-    // $ticket->comments()->create([
-    //     'user_id' => auth()->user()?->id,
-    //     'message' => 'Ticket réouvert',
-    //     'type' => 'system'
-    // ]);
+    TicketActivity::create([
+        'ticket_id' => $ticket->id,
+        'user_id' => auth()->id(),
+        'type' => 'reopen',
+        'message' => $request->reason,
+        'attachment_path' => $path,
+    ]);
 
-    return back()->with('success', 'Ticket réouvert avec succès');
+    return back()->with('success', 'Ticket réouvert');
 }
 
     
@@ -284,8 +311,11 @@ public function show(Ticket $ticket)
         ->sortBy('date')
         ->values();
 
-    $actions = TicketActionService::allowedActions($ticket);
-
+    $actions = TicketActionService::allowedActions(
+    $ticket,
+    auth()->user()
+);
+    $ticket->checkSla();
     return view('tickets.show', compact(
         'ticket',
         'activities',
@@ -417,6 +447,118 @@ public function start(Ticket $ticket)
     );
 }
 
+public function hold(Request $request, Ticket $ticket)
+{
+    $request->validate([
+        'reason' => 'required|string|min:5',
+        'attachment' => 'nullable|file|max:5120'
+    ]);
+
+    $path = null;
+
+    if ($request->hasFile('attachment')) {
+        $path = $request->file('attachment')
+            ->store('ticket-holds', 'public');
+    }
+
+    $ticket->update([
+        'status' => 'ON_HOLD',
+        'is_sla_paused' => true,
+        'sla_paused_at' => now(),
+    ]);
+
+    TicketActivity::create([
+        'ticket_id' => $ticket->id,
+        'user_id' => auth()->id(),
+        'type' => 'hold',
+        'message' => $request->reason,
+        'attachment_path' => $path,
+    ]);
+
+    return back()->with('success', 'Ticket mis en attente');
+}
+
+public function resume(Ticket $ticket)
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Vérifier pause SLA
+    |--------------------------------------------------------------------------
+    */
+
+    if (!$ticket->sla_paused_at) {
+
+        return back()->with(
+            'error',
+            'Aucune pause SLA active'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Calcul durée pause
+    |--------------------------------------------------------------------------
+    */
+
+    $pauseDuration = now()->diffInSeconds(
+        $ticket->sla_paused_at
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Nouvelle deadline
+    |--------------------------------------------------------------------------
+    */
+
+    $newResolutionDueAt = $ticket->resolution_due_at
+        ->copy()
+        ->addSeconds($pauseDuration);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update ticket
+    |--------------------------------------------------------------------------
+    */
+
+    $ticket->update([
+
+        'status' => 'IN_PROGRESS',
+
+        'resolution_due_at' => $newResolutionDueAt,
+
+        'total_pause_duration' =>
+            $ticket->total_pause_duration + $pauseDuration,
+
+        'is_sla_paused' => false,
+
+        'sla_paused_at' => null,
+
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Historique
+    |--------------------------------------------------------------------------
+    */
+
+    TicketActivity::create([
+
+        'ticket_id' => $ticket->id,
+
+        'user_id' => auth()->id(),
+
+        'type' => 'resume',
+
+        'message' => 'Traitement repris',
+
+    ]);
+
+    return back()->with(
+        'success',
+        'Traitement repris'
+    );
+}
+
 public function close(Ticket $ticket)
 {
     $ticket->update([
@@ -435,5 +577,20 @@ public function close(Ticket $ticket)
         'success',
         'Ticket clôturé'
     );
+}
+
+public function checkSla()
+{
+    if (
+        !$this->is_sla_paused
+        && $this->resolution_due_at
+        && now()->greaterThan($this->resolution_due_at)
+    ) {
+
+        $this->update([
+            'is_sla_breached' => true
+        ]);
+
+    }
 }
 }

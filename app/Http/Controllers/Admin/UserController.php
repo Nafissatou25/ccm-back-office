@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Unit;
+use App\Models\Agency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -17,29 +19,33 @@ class UserController extends Controller
     }
 
     public function create()
-    {
-        $roles = Role::all();
-        return view('admin.users.create', compact('roles'));
-    }
+{
+    return view('admin.users.create', [
+        'roles' => Role::all(),
+        'agencies' => Agency::all(),
+        'units' => Unit::all(),
+    ]);
+}
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
-            'role_id' => 'required'
-        ]);
+{
+    $data = $request->validate([
+        'name' => 'required|string',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|min:6',
 
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role_id' => $request->role_id,
-        ]);
+        'role_id' => 'required|exists:roles,id',
+        'agency_id' => 'nullable|exists:agencies,id',
+        'unit_id' => 'nullable|exists:units,id',
+    ]);
 
-        return redirect()->route('admin.users.index');
-    }
+    $data['password'] = bcrypt($data['password']);
+
+    User::create($data);
+
+    return redirect()->route('admin.users.index')
+        ->with('success', 'Utilisateur créé');
+}
 
     public function edit(User $user)
     {

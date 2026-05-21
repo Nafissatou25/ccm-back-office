@@ -12,47 +12,64 @@
     <div class="card-body">
 
         <form method="POST" action="{{ route('admin.users.store') }}">
-            @csrf
+    @csrf
 
-            <div class="row">
+    <div class="row">
 
-                {{-- NAME --}}
-                <div class="col-md-6 mb-3">
-                    <label>Nom</label>
-                    <input type="text" name="name" class="form-control" required>
-                </div>
+        {{-- NAME --}}
+        <div class="col-md-6 mb-3">
+            <label>Nom</label>
+            <input type="text" name="name" class="form-control" required>
+        </div>
 
-                {{-- EMAIL --}}
-                <div class="col-md-6 mb-3">
-                    <label>Email</label>
-                    <input type="email" name="email" class="form-control" required>
-                </div>
+        {{-- EMAIL --}}
+        <div class="col-md-6 mb-3">
+            <label>Email</label>
+            <input type="email" name="email" class="form-control" required>
+        </div>
 
-                {{-- PASSWORD --}}
-                <div class="col-md-6 mb-3">
-                    <label>Mot de passe</label>
-                    <input type="password" name="password" class="form-control" required>
-                </div>
+        {{-- PASSWORD --}}
+        <div class="col-md-6 mb-3">
+            <label>Mot de passe</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
 
-                {{-- ROLE --}}
-                <div class="col-md-6 mb-3">
-                    <label>Rôle</label>
-                    <select name="role_id" class="form-control" required>
-                        @foreach($roles as $role)
-                            <option value="{{ $role->id }}">
-                                {{ $role->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+        {{-- ROLE --}}
+        <div class="col-md-6 mb-3">
+            <label>Rôle</label>
+            <select name="role_id" class="form-control" required>
+                @foreach($roles as $role)
+                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                @endforeach
+            </select>
+        </div>
 
-            </div>
+        {{-- AGENCY --}}
+        <div class="col-md-6 mb-3">
+            <label>Agence</label>
+            <select name="agency_id" class="form-control">
+                <option value="">-- Optionnel --</option>
+                @foreach($agencies as $agency)
+                    <option value="{{ $agency->id }}">{{ $agency->name }}</option>
+                @endforeach
+            </select>
+        </div>
 
-            <button class="btn btn-primary">
-                Créer
-            </button>
+        {{-- UNIT --}}
+        <div class="col-md-6 mb-3">
+            <label>Unité</label>
+            <select name="unit_id" class="form-control">
+                <option value="">-- Optionnel --</option>
+                @foreach($units as $unit)
+                    <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                @endforeach
+            </select>
+        </div>
 
-        </form>
+    </div>
+
+    <button class="btn btn-primary">Créer</button>
+</form>
 
     </div>
 </div>

@@ -26,7 +26,7 @@
                     </button> -->
                 </h1>
                 <div class="dropdown">
-    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+    <button class="btn btn-primary" type="button" data-bs-toggle="dropdown">
         <i class="bi bi-three-dots-vertical me-1"></i> Actions
     </button>
 
@@ -87,7 +87,7 @@
         <li>
             <form method="POST" action="{{ route('tickets.close', $ticket->id) }}">
                 @csrf @method('PATCH')
-                <button class="dropdown-item text-danger">
+                <button class="dropdown-item">
                     <i class="bi bi-lock me-2"></i> Clôturer
                 </button>
             </form>
@@ -99,12 +99,44 @@
         <li>
             <form method="POST" action="{{ route('tickets.reopen', $ticket->id) }}">
                 @csrf @method('PATCH')
-                <button class="dropdown-item">
-                    <i class="bi bi-arrow-counterclockwise me-2"></i> Réouvrir
-                </button>
+                <button type="button" class="dropdown-item"
+            data-bs-toggle="modal"
+            data-bs-target="#reopenModal">
+        <i class="bi bi-arrow-counterclockwise me-2"></i>
+        Réouvrir
+    </button>
             </form>
         </li>
         @endif
+
+        @if(in_array('hold', $actions))
+<li>
+    <form method="POST"
+          action="{{ route('tickets.hold', $ticket->id) }}">
+        @csrf
+        @method('PATCH')
+
+        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#holdModal" type="button">
+    <i class="bi bi-pause-circle me-2"></i> Mettre en attente
+</button>
+    </form>
+</li>
+@endif
+
+@if(in_array('resume', $actions))
+<li>
+    <form method="POST"
+          action="{{ route('tickets.resume', $ticket->id) }}">
+        @csrf
+        @method('PATCH')
+
+        <button class="dropdown-item">
+            <i class="bi bi-play-circle me-2"></i>
+            Reprendre le traitement
+        </button>
+    </form>
+</li>
+@endif
 
         {{-- Transfer --}}
         @if(in_array('transfer', $actions))
@@ -119,8 +151,7 @@
 </div>
             </div>
             <p class="text-muted mt-2 mb-0">
-                Créé le {{ $ticket->created_at->format('d/m/Y à H:i') }} par 
-                <strong>{{ $ticket->creator->name ?? 'Utilisateur' }}</strong>
+                Créé le {{ $ticket->created_at->format('d/m/Y à H:i') }}
             </p>
         </div>
         
@@ -230,8 +261,8 @@
     @else
         <span class="text-muted">Non assigné</span>
     @endif</li>
-                        <!-- <li class="mb-3"><strong>Prise en charge attendue le :</strong><br>{{ $ticket->response_due_at ? \Carbon\Carbon::parse($ticket->response_due_at)->format('d/m/Y H:i') : 'Non définie' }}</li>
-                        <li><strong>Résolution attendue le :</strong><br>{{ $ticket->resolution_due_at ? \Carbon\Carbon::parse($ticket->resolution_due_at)->format('d/m/Y H:i') : 'Non définie' }}</li> -->
+                        <!-- <li class="mb-3"><strong>Prise en charge attendue le :</strong><br>{{ $ticket->response_due_at ? \Carbon\Carbon::parse($ticket->response_due_at)->format('d/m/Y H:i') : 'Non définie' }}</li> -->
+                        <li><strong>Résolution attendue le :</strong><br>{{ $ticket->resolution_due_at ? \Carbon\Carbon::parse($ticket->resolution_due_at)->format('d/m/Y H:i') : 'Non définie' }}</li>
                     </ul>
                 </div>
                 <div class="card-body p-4">
@@ -287,7 +318,37 @@
                                 </div>
                             @endif -->
 
-                            
+@if($activity['type'] === 'reopen')
+
+<div class="d-flex gap-3 mb-4">
+
+    <div class="flex-shrink-0">
+        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center"
+             style="width:42px;height:42px;">
+            <i class="bi bi-arrow-counterclockwise text-white"></i>
+        </div>
+    </div>
+
+    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+
+        <small class="text-muted d-block mb-1">
+            {{ $activity['data']->user->name ?? 'Utilisateur' }}
+
+            <span class="float-end">
+                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
+            </span>
+        </small>
+
+        <p class="mb-0">
+            {{ $activity['data']->message }}
+        </p>
+
+    </div>
+
+</div>
+
+@endif
+
 @if($activity['type'] === 'resolution')
 <div class="d-flex justify-content-end gap-3 mb-4">
     <div class="flex-shrink-0">
@@ -384,6 +445,32 @@
 
 </div>
 
+@endif
+
+@if($activity['type'] === 'hold')
+<div class="d-flex gap-3 mb-4">
+
+    <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center"
+         style="width:42px;height:42px;">
+        <i class="bi bi-pause text-white"></i>
+    </div>
+
+    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+
+        <small class="text-muted d-block mb-1">
+            {{ $activity['data']->user->name }}
+            <span class="float-end">
+                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
+            </span>
+        </small>
+
+        <p class="mb-0">
+            {{ $activity['data']->message }}
+        </p>
+
+    </div>
+
+</div>
 @endif
                         @endforeach
                     </div>
@@ -486,6 +573,85 @@
     </div>
 </div>
 
+<div class="modal fade" id="holdModal" tabindex="-1">
+    <div class="modal-dialog">
+
+        <form method="POST"
+              action="{{ route('tickets.hold', $ticket->id) }}"
+              enctype="multipart/form-data">
+
+            @csrf
+            @method('PATCH')
+
+            <div class="modal-content">
+
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Mettre en attente</h5>
+                </div>
+
+                <div class="modal-body">
+
+                    <textarea name="reason"
+                              class="form-control mb-3"
+                              placeholder="Motif obligatoire"
+                              required></textarea>
+
+                    <input type="file"
+                           name="attachment"
+                           class="form-control">
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-warning">Valider</button>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<div class="modal fade" id="reopenModal" tabindex="-1">
+    <div class="modal-dialog">
+
+        <form method="POST"
+              action="{{ route('tickets.reopen', $ticket->id) }}"
+              enctype="multipart/form-data">
+
+            @csrf
+            @method('PATCH')
+
+            <div class="modal-content">
+
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Réouvrir le ticket</h5>
+                </div>
+
+                <div class="modal-body">
+
+                    <textarea name="reason"
+                              class="form-control mb-3"
+                              placeholder="Motif de réouverture"
+                              required></textarea>
+
+                    <input type="file"
+                           name="attachment"
+                           class="form-control">
+
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-warning">Réouvrir</button>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
 
 {{-- Modal Document --}}
 <div class="modal fade" id="documentModal" tabindex="-1">

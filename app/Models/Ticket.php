@@ -17,17 +17,26 @@ class Ticket extends Model
     'contract_number',
     'attachment_path',
     'sla_id',
-    'response_due_at',
-    'resolution_due_at',
     'is_sla_paused',
     'sla_paused_at',
     'total_pause_duration',
+    'is_sla_breached',
+    'resolution_due_at',
 ];
 
 protected $casts = [
-    'response_due_at' => 'datetime',
+    
+    'started_at' => 'datetime',
+    'resolved_at' => 'datetime',
+    'closed_at' => 'datetime',
+
     'resolution_due_at' => 'datetime',
+    'response_due_at' => 'datetime',
+
     'sla_paused_at' => 'datetime',
+
+    'is_sla_paused' => 'boolean',
+    'is_sla_breached' => 'boolean',
 ];
 
     // relations
@@ -90,5 +99,20 @@ public function activities()
 {
     return $this->hasMany(TicketActivity::class);
 }
+
+public function checkSla()
+    {
+        if (
+            !$this->is_sla_paused
+            && $this->resolution_due_at
+            && now()->greaterThan($this->resolution_due_at)
+        ) {
+
+            $this->update([
+                'is_sla_breached' => true
+            ]);
+
+        }
+    }
 
 }

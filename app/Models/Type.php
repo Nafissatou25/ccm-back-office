@@ -9,4 +9,9 @@ class Type extends Model
 {
     use HasFactory;
     protected $fillable = ['name', 'unit_id'];
+
+    public function unit()
+{
+    return $this->belongsTo(Unit::class);
+}
 }
