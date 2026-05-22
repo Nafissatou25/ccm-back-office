@@ -19,32 +19,99 @@ class TicketController extends Controller
     /**
      * Liste des tickets
      */
-    public function index()
+    public function index(Request $request)
 {
     $user = auth()->user();
-
-    // sécuriser relation role
     $user->load('role');
     $role = strtoupper($user->role?->name);
 
+    // ----- Filtres -----
+    $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : null;
+    $endDate   = $request->filled('end_date')   ? Carbon::parse($request->end_date)->endOfDay()   : null;
+    $selectedUnitId = $request->filled('unit_id') ? (int)$request->unit_id : null;
+    $selectedTypeId = $request->filled('type_id') ? (int)$request->type_id : null;
+
+    // ----- Requête de base -----
     $query = Ticket::with(['type', 'unit']);
 
-    $tickets = match ($role) {
+    // ==== RESTRICTION PAR RÔLE (corrigée) ====
+    if (in_array($role, ['ADMIN', 'MANAGER', 'CUSTOMER_SERVICE'])) {
+        // Accès complet à tous les tickets (aucune restriction)
+    } elseif ($role === 'SUPERVISOR') {
+        $query->where('assigned_to', $user->id);
+    } elseif ($role === 'TECHNICIAN') {
+        $query->whereHas('technicians', fn($q) => $q->where('users.id', $user->id));
+    } else {
+        // Par défaut (client, etc.) : seulement ses propres tickets
+        $query->where('created_by', $user->id);
+    }
 
-        'MANAGER', 'CUSTOMER_SERVICE' => $query->latest()->get(),
+    // Application des filtres (unité, type, dates)
+    if ($selectedUnitId && !in_array($role, ['MANAGER', 'ADMIN', 'CUSTOMER_SERVICE'])) {
+        // Pour les autres rôles, on applique le filtre unité s'il est présent
+        $query->where('unit_id', $selectedUnitId);
+    }
+    if ($selectedTypeId) {
+        $query->where('type_id', $selectedTypeId);
+    }
+    if ($startDate) {
+        $query->where('created_at', '>=', $startDate);
+    }
+    if ($endDate) {
+        $query->where('created_at', '<=', $endDate);
+    }
 
-        'SUPERVISOR' => $query->where('assigned_to', $user->id)
-            ->latest()
-            ->get(),
+    // (Le reste du code : récupération des tickets, $stats, etc. reste inchangé)
+    $tickets = $query->latest()->get();
 
-        'TECHNICIAN' => $query->whereHas('technicians', function ($q) use ($user) {
-            $q->where('users.id', $user->id);
-        })->latest()->get(),
+    // Données pour les filtres (unités et types) – pour l'affichage
+    if (in_array($role, ['ADMIN', 'MANAGER', 'CUSTOMER_SERVICE'])) {
+        $units = Unit::orderBy('name')->get();
+    } else {
+        $units = Unit::where('id', $selectedUnitId)->get();
+    }
 
-        default => collect()
-    };
+    $unitIdForTypes = $selectedUnitId ?? null;
+    if ($unitIdForTypes) {
+        $eligibleTypes = Type::where('unit_id', $unitIdForTypes)->orderBy('name')->get();
+    } else {
+        $eligibleTypes = Type::orderBy('name')->get();
+    }
 
-    return view('tickets.index', compact('tickets'));
+    $statusColors = [
+        'OPEN' => 'warning',
+        'IN_PROGRESS' => 'primary',
+        'ON_HOLD' => 'secondary',
+        'RESOLVED' => 'success',
+        'CLOSED' => 'dark',
+        'TRANSFERRED' => 'secondary',
+        'REOPENED' => 'danger'
+    ];
+
+
+
+    // ----- Comptes par statut (basés sur la requête filtrée) -----
+$stats = [
+    'total'      => (clone $query)->count(),
+    'open'       => (clone $query)->where('status', 'OPEN')->count(),
+    'inProgress' => (clone $query)->where('status', 'IN_PROGRESS')->count(),
+    'transferred'=> (clone $query)->where('status', 'TRANSFERRED')->count(),
+    'onHold'     => (clone $query)->where('status', 'ON_HOLD')->count(),
+    'reopened'   => (clone $query)->where('status', 'REOPENED')->count(),
+    'resolved'   => (clone $query)->where('status', 'RESOLVED')->count(),
+    'closed'     => (clone $query)->where('status', 'CLOSED')->count(),
+    'late'       => (clone $query)
+        ->whereNotIn('status', ['RESOLVED', 'CLOSED'])
+        ->where('resolution_due_at', '<', now())
+        ->count(),
+];
+
+
+
+    return view('tickets.index', compact(
+       'tickets', 'statusColors', 'units', 'eligibleTypes',
+    'selectedUnitId', 'selectedTypeId', 'startDate', 'endDate', 'role', 'stats'
+    ));
 }
 
     /**

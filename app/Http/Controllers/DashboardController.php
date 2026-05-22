@@ -17,10 +17,9 @@ class DashboardController extends Controller
         $user = Auth::user();
         $role = strtolower($user->role->name ?? 'client');
 
-        // Redirection admin (si vous avez un dashboard admin séparé)
-        if ($role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
+        if (!in_array($role, ['manager', 'admin', 'customer_service'])) {
+        abort(403, 'Accès non autorisé à ce tableau de bord.');
+    }
 
         // ----- Période -----
         $startDate = $request->filled('start_date')
@@ -33,26 +32,42 @@ class DashboardController extends Controller
         // ----- Filtre unité -----
         $selectedUnitId = $request->filled('unit_id') ? (int)$request->unit_id : null;
 
-        // -----Filtre type ------
-        $types = Type::orderBy('name')->get();
-        $selectedTypeId = $request->filled('type_id') ? (int)$request->type_id : null;
+        // ----- Filtre type -----
+       // ----- Filtre type : limiter aux types de l'unité sélectionnée -----
+if ($role === 'manager') {
+    $unitIdForTypes = $user->unit_id;
+} else {
+    $unitIdForTypes = $selectedUnitId;
+}
+
+if ($unitIdForTypes) {
+    $eligibleTypes = Type::where('unit_id', $unitIdForTypes)->orderBy('name')->get();
+} else {
+    $eligibleTypes = Type::orderBy('name')->get();
+}
+
+$selectedTypeId = $request->filled('type_id') ? (int)$request->type_id : null;
+if ($selectedTypeId && !$eligibleTypes->contains('id', $selectedTypeId)) {
+    $selectedTypeId = null;
+}
+
+
 
         // ----- Requête de base (période + restrictions par rôle) -----
         $baseQuery = Ticket::whereBetween('created_at', [$startDate, $endDate]);
 
         if ($role === 'technicien') {
             $baseQuery->where('assigned_to', $user->id);
-        } elseif ($role === 'manager') {
-            $baseQuery->where('unit_id', $user->unit_id);
-        } elseif ($role === 'client') {
+       }  elseif ($role === 'client') {
             $baseQuery->where('created_by', $user->id);
         }
 
-        // Appliquer le filtre unité (sauf pour manager, déjà limité)
+        // Appliquer le filtre unité (sauf pour manager déjà limité)
         if ($selectedUnitId && $role !== 'manager') {
             $baseQuery->where('unit_id', $selectedUnitId);
         }
 
+        // Appliquer le filtre type
         if ($selectedTypeId) {
             $baseQuery->where('type_id', $selectedTypeId);
         }
@@ -61,20 +76,16 @@ class DashboardController extends Controller
         $totalTickets = (clone $baseQuery)->count();
         $openTickets = (clone $baseQuery)->where('status', 'OPEN')->count();
         $inProgressTickets = (clone $baseQuery)->where('status', 'IN_PROGRESS')->count();
-        $resolvedTickets = (clone $baseQuery)->where('status', 'RESOLVED')->count();
-        $closedTickets = (clone $baseQuery)->where('status', 'CLOSED')->count();
         $transferredTickets = (clone $baseQuery)->where('status', 'TRANSFERRED')->count();
         $onHoldTickets = (clone $baseQuery)->where('status', 'ON_HOLD')->count();
+        $reopenedTickets = (clone $baseQuery)->where('status', 'REOPENED')->count();
+        $resolvedTickets = (clone $baseQuery)->where('status', 'RESOLVED')->count();
+        $closedTickets = (clone $baseQuery)->where('status', 'CLOSED')->count();
 
-        // ----- Tickets en retard (SLA dépassé et non clos/résolu) -----
+        // ----- Tickets en retard (SLA dépassé et non clôturé/résolu) -----
         $lateTickets = (clone $baseQuery)
             ->whereNotIn('status', ['RESOLVED', 'CLOSED'])
             ->where('resolution_due_at', '<', now())
-            ->count();
-
-        // ----- Tickets réouverts -----
-        $reopenedTickets = (clone $baseQuery)
-            ->where('status', 'REOPENED')
             ->count();
 
         // ----- Tickets par priorité -----
@@ -85,39 +96,29 @@ class DashboardController extends Controller
             'CRITICAL' => (clone $baseQuery)->where('priority', 'CRITICAL')->count(),
         ];
 
-        // ----- Performance par unité (pour les graphiques et le tableau) -----
+        // ----- Performance par unité (avec prise en compte du filtre type) -----
+        $unitQuery = Ticket::whereBetween('created_at', [$startDate, $endDate]);
+        if ($role === 'technicien') $unitQuery->where('assigned_to', $user->id);
+        if ($role === 'manager') $unitQuery->where('unit_id', $user->unit_id);
+        if ($role === 'client') $unitQuery->where('created_by', $user->id);
+        if ($selectedTypeId) $unitQuery->where('type_id', $selectedTypeId);
+
         $unitPerformance = Unit::withCount([
-            'tickets as total_tickets' => function ($q) use ($startDate, $endDate, $role, $user) {
-                $q->whereBetween('created_at', [$startDate, $endDate]);
-                if ($role === 'technicien') $q->where('assigned_to', $user->id);
-                if ($role === 'manager') $q->where('unit_id', $user->unit_id);
-                if ($role === 'client') $q->where('created_by', $user->id);
+            'tickets as total_tickets' => function ($q) use ($unitQuery) {
+                $q->whereIn('tickets.id', $unitQuery->pluck('id'));
             },
-            'tickets as resolved_tickets' => function ($q) use ($startDate, $endDate, $role, $user) {
-                $q->whereBetween('created_at', [$startDate, $endDate])
-                  ->whereIn('status', ['RESOLVED', 'CLOSED']);
-                if ($role === 'technicien') $q->where('assigned_to', $user->id);
-                if ($role === 'manager') $q->where('unit_id', $user->unit_id);
-                if ($role === 'client') $q->where('created_by', $user->id);
+            'tickets as resolved_tickets' => function ($q) use ($unitQuery) {
+                $q->whereIn('tickets.id', (clone $unitQuery)->whereIn('status', ['RESOLVED', 'CLOSED'])->pluck('id'));
             },
-            'tickets as late_tickets' => function ($q) use ($startDate, $endDate, $role, $user) {
-                $q->whereBetween('created_at', [$startDate, $endDate])
-                  ->whereNotIn('status', ['RESOLVED', 'CLOSED'])
-                  ->where('resolution_due_at', '<', now());
-                if ($role === 'technicien') $q->where('assigned_to', $user->id);
-                if ($role === 'manager') $q->where('unit_id', $user->unit_id);
-                if ($role === 'client') $q->where('created_by', $user->id);
+            'tickets as late_tickets' => function ($q) use ($unitQuery) {
+                $q->whereIn('tickets.id', (clone $unitQuery)->whereNotIn('status', ['RESOLVED', 'CLOSED'])->where('resolution_due_at', '<', now())->pluck('id'));
             },
-            'tickets as reopened_tickets' => function ($q) use ($startDate, $endDate, $role, $user) {
-                $q->whereBetween('created_at', [$startDate, $endDate])
-                  ->where('status', 'REOPENED');
-                if ($role === 'technicien') $q->where('assigned_to', $user->id);
-                if ($role === 'manager') $q->where('unit_id', $user->unit_id);
-                if ($role === 'client') $q->where('created_by', $user->id);
+            'tickets as reopened_tickets' => function ($q) use ($unitQuery) {
+                $q->whereIn('tickets.id', (clone $unitQuery)->where('status', 'REOPENED')->pluck('id'));
             }
         ])->get();
 
-        // ----- Tickets récents (limite 10) -----
+        // ----- Tickets récents (10 derniers) -----
         $recentTickets = (clone $baseQuery)->latest()->take(10)->get();
 
         // ----- Liste des unités pour le filtre (selon les droits) -----
@@ -130,10 +131,12 @@ class DashboardController extends Controller
             'totalTickets',
             'openTickets',
             'inProgressTickets',
+            'transferredTickets',
+            'onHoldTickets',
+            'reopenedTickets',
             'resolvedTickets',
             'closedTickets',
             'lateTickets',
-            'reopenedTickets',
             'priorityStats',
             'unitPerformance',
             'recentTickets',
@@ -142,8 +145,8 @@ class DashboardController extends Controller
             'selectedUnitId',
             'units',
             'role',
-            'transferredTickets',
-            'onHoldTickets'
+            'eligibleTypes',
+            'selectedTypeId'
         ));
     }
 }

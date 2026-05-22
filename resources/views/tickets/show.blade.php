@@ -211,26 +211,37 @@
 
     @php
         $statusColors = [
-            'OPEN' => 'warning',
-            'IN_PROGRESS' => 'primary',
-            'ON_HOLD' => 'secondary',
-            'RESOLVED' => 'success',
-            'CLOSED' => 'dark',
-            'ASSIGNED_TO_TECHNICIANS' => 'info',
-            'REOPENED' => 'danger',
-            'TRANSFERRED' => 'warning'
-        ];
+    'OPEN' => 'warning',
+    'IN_PROGRESS' => 'info',
+    'TRANSFERRED' => 'secondary',
+    'ON_HOLD' => 'dark',
+    'REOPENED' => 'danger',
+    'RESOLVED' => 'success',
+    'CLOSED' => 'secondary',
+    'ASSIGNED_TO_TECHNICIANS' => 'info',
+];
+
+$statusLabels = [
+    'OPEN' => 'Ouvert',
+    'ASSIGNED_TO_TECHNICIANS' => 'Assigné',
+    'IN_PROGRESS' => 'En cours',
+    'ON_HOLD' => 'En attente',
+    'RESOLVED' => 'Résolu',
+    'CLOSED' => 'Clôturé',
+    'REOPENED' => 'Réouvert',
+    'TRANSFERRED' => 'Transféré'
+];
 
         $statusLabels = [
-            'OPEN' => 'Ouvert',
-            'ASSIGNED_TO_TECHNICIANS' => 'Assigné',
-            'IN_PROGRESS' => 'En cours',
-            'ON_HOLD' => 'En attente',
-            'RESOLVED' => 'Résolu',
-            'CLOSED' => 'Clôturé',
-            'REOPENED' => 'Réouvert',
-            'TRANSFERRED' => 'Transféré'
-        ];
+    'OPEN' => 'Ouvert',
+    'ASSIGNED_TO_TECHNICIANS' => 'Assigné',
+    'IN_PROGRESS' => 'En cours',
+    'ON_HOLD' => 'En attente',
+    'RESOLVED' => 'Résolu',
+    'CLOSED' => 'Clôturé',
+    'REOPENED' => 'Réouvert',
+    'TRANSFERRED' => 'Transféré'
+];
     @endphp
 
     <span class="badge bg-{{ $statusColors[$ticket->status] ?? 'secondary' }}">
