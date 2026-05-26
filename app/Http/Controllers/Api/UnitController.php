@@ -11,9 +11,9 @@ class UnitController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        //
-    }
+{
+    return response()->json(\App\Models\Unit::all());
+}
 
     /**
      * Store a newly created resource in storage.

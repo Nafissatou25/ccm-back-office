@@ -4,11 +4,13 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TicketController;
+use App\Http\Controllers\Api\TicketCommentController;
+use App\Http\Controllers\Api\TicketDocumentController;
 
 use App\Http\Controllers\Api\Admin\CategoryController;
-use App\Http\Controllers\Api\Admin\TypeController;
-use App\Http\Controllers\Api\Admin\UnitController;
-use App\Http\Controllers\Api\Admin\AgencyController;
+use App\Http\Controllers\Api\TypeController;
+use App\Http\Controllers\Api\UnitController;
+use App\Http\Controllers\Api\AgencyController;
 use App\Http\Controllers\Api\Admin\SlaController;
 use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Admin\UserController;
@@ -20,15 +22,6 @@ use App\Http\Controllers\Api\Admin\UserController;
 */
 
 Route::post('/login', [AuthController::class, 'login']);
-
-/*
-|--------------------------------------------------------------------------
-| AUTH DEBUG (optionnel dev)
-|--------------------------------------------------------------------------
-*/
-Route::middleware('auth:sanctum')->get('/debug-user', function () {
-    return auth()->user();
-});
 
 /*
 |--------------------------------------------------------------------------
@@ -49,56 +42,86 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | TICKETS
+    | DONNÉES FORMULAIRES MOBILES (tous rôles authentifiés)
     |--------------------------------------------------------------------------
     */
 
-    // 🔹 CREATE TICKET (CUSTOMER SERVICE / MANAGER / SUPERVISOR)
+    Route::get('/units',      [UnitController::class,     'index']);
+    Route::get('/agencies',   [AgencyController::class,   'index']);
+    Route::get('/types',      [TypeController::class,     'index']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | TICKETS — LECTURE
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/tickets',              [TicketController::class, 'index']);
+    Route::get('/tickets/{ticket}',     [TicketController::class, 'show']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | TICKETS — CRÉATION
+    |--------------------------------------------------------------------------
+    */
+
     Route::post('/tickets', [TicketController::class, 'store'])
         ->middleware('role:CUSTOMER_SERVICE,MANAGER,SUPERVISOR');
 
-    // 🔹 ASSIGN TECHNICIANS
+    /*
+    |--------------------------------------------------------------------------
+    | TICKETS — ACTIONS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/supervisors', [TicketController::class, 'supervisors'])->middleware('auth:sanctum');
+
+    // Assignation techniciens (SUPERVISOR uniquement)
     Route::put('/tickets/{ticket}/assign-technicians', [TicketController::class, 'assignTechnicians'])
-        ->middleware('role:SUPERVISOR');
+        ->middleware('role:SUPERVISOR,MANAGER,ADMIN');
 
-    // 🔹 START TICKET
-    Route::patch('/tickets/{ticket}/start', [TicketController::class, 'start']);
+    // Démarrage (TECHNICIAN)
+    Route::patch('/tickets/{ticket}/start',   [TicketController::class, 'start']);
 
-    // 🔹 RESOLVE TICKET
+    // Résolution (TECHNICIAN)
     Route::patch('/tickets/{ticket}/resolve', [TicketController::class, 'resolve']);
 
-    // 🔹 CLOSE TICKET
-    Route::post('/tickets/{ticket}/close', [TicketController::class, 'closeTicket']);
+    // Clôture (CUSTOMER_SERVICE, SUPERVISOR, MANAGER, ADMIN)
+    Route::post('/tickets/{ticket}/close',    [TicketController::class, 'closeTicket']);
 
-    // 🔹 CHANGE STATUS
-    Route::post('/tickets/{ticket}/status', [TicketController::class, 'changeStatus']);
+    // Mise en attente
+    Route::patch('/tickets/{ticket}/hold',    [TicketController::class, 'hold']);
+
+    // Reprise après attente
+    Route::patch('/tickets/{ticket}/resume',  [TicketController::class, 'resume']);
+
+    // Transfert
+    Route::patch('/tickets/{ticket}/transfer', [TicketController::class, 'transfer']);
+
+    // Réouverture
+    Route::patch('/tickets/{ticket}/reopen',  [TicketController::class, 'reopen']);
+
+    // Changement de statut générique
+    Route::post('/tickets/{ticket}/status',   [TicketController::class, 'changeStatus']);
 
     /*
     |--------------------------------------------------------------------------
-    | COMMENTS
+    | COMMENTAIRES
     |--------------------------------------------------------------------------
     */
 
-    // Route::get('/tickets/{ticket}/comments', [TicketCommentController::class, 'index']);
-
-    // Route::post('/tickets/{ticket}/comments', [TicketCommentController::class, 'store']);
-
-    Route::get('/tickets/{ticket}/comments', [TicketCommentController::class, 'index']);
+    Route::get('/tickets/{ticket}/comments',  [TicketCommentController::class, 'index']);
     Route::post('/tickets/{ticket}/comments', [TicketCommentController::class, 'store']);
 
-    Route::get('/tickets/{ticket}/documents', [TicketDocumentController::class, 'index']);
-    Route::post('/tickets/{ticket}/documents', [TicketDocumentController::class, 'store']);
-
-    Route::get('/documents/{document}/download', [TicketDocumentController::class, 'download']);
-
     /*
     |--------------------------------------------------------------------------
-    | MY TICKETS
+    | DOCUMENTS
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/my-tickets', [TicketController::class, 'myTickets'])
-        ->middleware('role:TECHNICIAN,ENTERPRISE');
+    Route::get('/tickets/{ticket}/documents',      [TicketDocumentController::class, 'index']);
+    Route::post('/tickets/{ticket}/documents',     [TicketDocumentController::class, 'store']);
+    Route::get('/documents/{document}/download',   [TicketDocumentController::class, 'download']);
 
     /*
     |--------------------------------------------------------------------------
@@ -106,23 +129,16 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::middleware(['auth:sanctum', 'role:ADMIN'])
-    ->prefix('admin')
-    ->group(function () {
+    Route::middleware('role:ADMIN')
+        ->prefix('admin')
+        ->group(function () {
 
-        // USERS
-        Route::apiResource('users', UserController::class);
-
-        // CATALOGUE
-        Route::apiResource('categories', CategoryController::class);
-        Route::apiResource('types', TypeController::class);
-        Route::apiResource('units', UnitController::class);
-        Route::apiResource('agencies', AgencyController::class);
-
-        // SLA
-        Route::apiResource('slas', SlaController::class);
-
-        // ROLES
-        Route::apiResource('roles', RoleController::class);
-    });
+            Route::apiResource('users',      UserController::class);
+            Route::apiResource('categories', CategoryController::class);
+            Route::apiResource('types',      TypeController::class);
+            Route::apiResource('units',      UnitController::class);
+            Route::apiResource('agencies',   AgencyController::class);
+            Route::apiResource('slas',       SlaController::class);
+            Route::apiResource('roles',      RoleController::class);
+        });
 });

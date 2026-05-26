@@ -34,6 +34,16 @@ class TicketController extends Controller
     // ----- Requête de base -----
     $query = Ticket::with(['type', 'unit']);
 
+    // Filtre par statut
+if ($request->filled('status')) {
+    $query->where('status', $request->status);
+}
+// Filtre "en retard" (tickets non résolus/clos avec SLA dépassé)
+if ($request->has('late')) {
+    $query->whereNotIn('status', ['RESOLVED', 'CLOSED'])
+          ->where('resolution_due_at', '<', now());
+}
+
     // ==== RESTRICTION PAR RÔLE (corrigée) ====
     if (in_array($role, ['ADMIN', 'MANAGER', 'CUSTOMER_SERVICE'])) {
         // Accès complet à tous les tickets (aucune restriction)

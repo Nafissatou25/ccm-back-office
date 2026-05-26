@@ -11,9 +11,9 @@ class AgencyController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        //
-    }
+{
+    return response()->json(\App\Models\Agency::all());
+}
 
     /**
      * Store a newly created resource in storage.

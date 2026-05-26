@@ -44,46 +44,55 @@
             </form>
         </div>
 
-        {{-- CARTES STATUTS (tous les statuts, couleurs distinctes) --}}
-        <div class="d-flex flex-wrap gap-2 mb-5">
-            @php
-                // Palette distincte pour chaque statut
-                $cardPalette = [
-                    'Ouverts'    => ['icon' => 'mdi-alert-circle', 'color' => '#f6c23e'],
-                    'En cours'   => ['icon' => 'mdi-progress-clock', 'color' => '#36b9cc'],
-                    'Transférés' => ['icon' => 'mdi-swap-horizontal', 'color' => '#6f42c1'],    // violet
-                    'En attente' => ['icon' => 'mdi-pause-circle', 'color' => '#a09898'],        // gris brun
-                    'Réouverts'  => ['icon' => 'mdi-repeat', 'color' => '#fd7e14'],              // orange foncé
-                    'Résolus'    => ['icon' => 'mdi-check-circle', 'color' => '#1cc88a'],
-                    'Clôturés'   => ['icon' => 'mdi-lock', 'color' => '#6c757d'],                // gris foncé
-                    'En retard'  => ['icon' => 'mdi-alarm-check', 'color' => '#e74a3b'],         
-                    'Total'      => ['icon' => 'mdi-ticket', 'color' => '#4e73df'],
-                ];
-                $cards = [
-                    ['label' => 'Ouverts',    'value' => $openTickets],
-                    ['label' => 'En cours',   'value' => $inProgressTickets],
-                    ['label' => 'Transférés', 'value' => $transferredTickets ?? 0],
-                    ['label' => 'En attente', 'value' => $onHoldTickets ?? 0],
-                    ['label' => 'Réouverts',  'value' => $reopenedTickets],
-                    ['label' => 'Résolus',    'value' => $resolvedTickets],
-                    ['label' => 'Clôturés',   'value' => $closedTickets],
-                    ['label' => 'En retard',  'value' => $lateTickets],
-                    ['label' => 'Total',      'value' => $totalTickets],
-                ];
-            @endphp
-            @foreach($cards as $card)
-                @php $p = $cardPalette[$card['label']]; @endphp
-                <div class="card border-0 shadow-sm" style="min-width: 100px; flex: 1 0 auto; border-radius: 12px;">
-                    <div class="card-body p-2 d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="text-muted small text-uppercase">{{ $card['label'] }}</span>
-                            <h4 class="fw-bold mb-0">{{ $card['value'] }}</h4>
-                        </div>
-                        <i class="mdi {{ $p['icon'] }} fs-4" style="color: {{ $p['color'] }};"></i>
-                    </div>
+        {{-- CARTES STATUTS (tous les statuts, cliquables) --}}
+<div class="d-flex flex-wrap gap-2 mb-5">
+    @php
+        $cards = [
+            ['label' => 'Ouverts',    'value' => $openTickets,          'status' => 'OPEN'],
+            ['label' => 'En cours',   'value' => $inProgressTickets,    'status' => 'IN_PROGRESS'],
+            ['label' => 'Transférés', 'value' => $transferredTickets ?? 0, 'status' => 'TRANSFERRED'],
+            ['label' => 'En attente', 'value' => $onHoldTickets ?? 0,   'status' => 'ON_HOLD'],
+            ['label' => 'Réouverts',  'value' => $reopenedTickets,      'status' => 'REOPENED'],
+            ['label' => 'Résolus',    'value' => $resolvedTickets,      'status' => 'RESOLVED'],
+            ['label' => 'Clôturés',   'value' => $closedTickets,        'status' => 'CLOSED'],
+            ['label' => 'En retard',  'value' => $lateTickets,          'late' => 1],
+            ['label' => 'Total',      'value' => $totalTickets,         'status' => null],
+        ];
+        $cardPalette = [
+            'Ouverts'    => ['icon' => 'mdi-alert-circle',    'color' => '#f6c23e'],
+            'En cours'   => ['icon' => 'mdi-progress-clock',  'color' => '#36b9cc'],
+            'Transférés' => ['icon' => 'mdi-swap-horizontal', 'color' => '#6f42c1'],
+            'En attente' => ['icon' => 'mdi-pause-circle',    'color' => '#a09898'],
+            'Réouverts'  => ['icon' => 'mdi-repeat',          'color' => '#fd7e14'],
+            'Résolus'    => ['icon' => 'mdi-check-circle',    'color' => '#1cc88a'],
+            'Clôturés'   => ['icon' => 'mdi-lock',            'color' => '#6c757d'],
+            'En retard'  => ['icon' => 'mdi-alarm-check',     'color' => '#e74a3b'],
+            'Total'      => ['icon' => 'mdi-ticket',          'color' => '#4e73df'],
+        ];
+    @endphp
+    @foreach($cards as $card)
+        @php
+            $p = $cardPalette[$card['label']];
+            // Construction de l'URL de filtrage
+            if (isset($card['late'])) {
+                $url = route('tickets.index', ['late' => 1]);
+            } elseif ($card['status'] !== null) {
+                $url = route('tickets.index', ['status' => $card['status']]);
+            } else {
+                $url = route('tickets.index');
+            }
+        @endphp
+        <a href="{{ $url }}" class="card border-0 shadow-sm text-decoration-none" style="min-width: 100px; flex: 1 0 auto; border-radius: 12px;">
+            <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase">{{ $card['label'] }}</span>
+                    <h4 class="fw-bold mb-0">{{ $card['value'] }}</h4>
                 </div>
-            @endforeach
-        </div>
+                <i class="mdi {{ $p['icon'] }} fs-4" style="color: {{ $p['color'] }};"></i>
+            </div>
+        </a>
+    @endforeach
+</div>
 
         {{-- GRAPHIQUES --}}
         <div class="row g-3 mb-4">

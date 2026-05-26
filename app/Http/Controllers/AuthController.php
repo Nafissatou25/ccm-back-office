@@ -23,16 +23,36 @@ class AuthController extends Controller
     public function login(Request $request)
 {
     $credentials = $request->validate([
-        'email' => 'required|email',
+        'email'    => 'required|email',
         'password' => 'required'
     ]);
 
+    // ✅ Branche API (Flutter)
+    if ($request->expectsJson() || $request->is('api/*')) {
+        if (!Auth::attempt($credentials)) {
+            return response()->json([
+                'message' => 'Email ou mot de passe incorrect'
+            ], 401);
+        }
+
+        $user  = Auth::user();
+        $token = $user->createToken('mobile')->plainTextToken;
+
+        return response()->json([
+            'token' => $token,
+            'user'  => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+                'role'  => $user->role,
+            ]
+        ]);
+    }
+
+    // ✅ Branche Web (Blade)
     if (Auth::attempt($credentials)) {
-
         $request->session()->regenerate();
-
-        $user = Auth::user();
-        return redirect()->to(LoginRedirectService::redirect($user));
+        return redirect()->to(LoginRedirectService::redirect(Auth::user()));
     }
 
     return back()->withErrors([
