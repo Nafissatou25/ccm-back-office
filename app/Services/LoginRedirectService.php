@@ -11,8 +11,9 @@ class LoginRedirectService
     return match (strtoupper($user->role?->name ?? '')) {
 
         'ADMIN' => route('admin.dashboard'),
+        'TECHNICIAN' => route('tickets.index'),
 
-        default => route('tickets.index'),
+        default => route('dashboard'),
     };
 }
 }

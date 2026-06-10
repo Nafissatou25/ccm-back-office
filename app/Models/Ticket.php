@@ -22,6 +22,9 @@ class Ticket extends Model
     'total_pause_duration',
     'is_sla_breached',
     'resolution_due_at',
+    'client_id',
+    'company_id',
+    'created_by'
 ];
 
 protected $casts = [
@@ -98,6 +101,29 @@ public function assigner()
 public function activities()
 {
     return $this->hasMany(TicketActivity::class);
+}
+public function client()
+{
+    return $this->belongsTo(Client::class);
+}
+
+public function company()
+{
+    return $this->belongsTo(Company::class);
+}
+
+// app/Models/Ticket.php
+public function supervisors()
+{
+    return $this->belongsToMany(User::class, 'ticket_supervisors');
+}
+
+// Ajoute un superviseur à l'historique (sans duplication)
+public function addSupervisor(User $user)
+{
+    if (!$this->supervisors()->where('user_id', $user->id)->exists()) {
+        $this->supervisors()->attach($user->id);
+    }
 }
 
 public function checkSla()

@@ -153,6 +153,9 @@
             <p class="text-muted mt-2 mb-0">
                 Créé le {{ $ticket->created_at->format('d/m/Y à H:i') }}
             </p>
+            <p class="text-muted mt-2 mb-0">
+                par <strong>{{ $ticket->user?->name ?? 'Utilisateur inconnu' }}</strong>
+            </p>
         </div>
         
 
@@ -265,13 +268,14 @@ $statusLabels = [
         <span class="text-muted">Aucune pièce jointe</span>
     @endif
 </li>
-                        <li class="mb-3"><strong>Assigné à :</strong><br>@if($ticket->technicians->count())
-        @foreach($ticket->technicians as $tech)
-            <span>{{ $tech->name }}</span>
-        @endforeach
+                       <li class="mb-3">
+    <strong>Assigné à :</strong><br>
+    @if($ticket->technicians->count())
+        {{ $ticket->technicians->pluck('name')->implode(', ') }}
     @else
         <span class="text-muted">Non assigné</span>
-    @endif</li>
+    @endif
+</li>
                         <!-- <li class="mb-3"><strong>Prise en charge attendue le :</strong><br>{{ $ticket->response_due_at ? \Carbon\Carbon::parse($ticket->response_due_at)->format('d/m/Y H:i') : 'Non définie' }}</li> -->
                         <li><strong>Résolution attendue le :</strong><br>{{ $ticket->resolution_due_at ? \Carbon\Carbon::parse($ticket->resolution_due_at)->format('d/m/Y H:i') : 'Non définie' }}</li>
                     </ul>
@@ -286,8 +290,15 @@ $statusLabels = [
                         <!-- <span>TTR (résolution)</span>
                         <span class="fw-bold">{{ $ticket->time_to_resolve ?? 'En cours' }}</span> -->
                     </div>
+                    @if($ticket->client)
+    <li><strong>Client :</strong> {{ $ticket->client->firstname }} {{ $ticket->client->name }}</li>
+    <li><strong>Téléphone :</strong> {{ $ticket->client->phone }}</li>
+    <li><strong>Contrat :</strong> {{ $ticket->client->contract_number ?? '—' }}</li>
+@endif
                 </div>
+                
             </div>
+            
 
             {{-- Carte SLA / chrono --}}
             <!-- <div class="card border-0 shadow-sm rounded-4 mt-4 bg-light">
@@ -311,180 +322,223 @@ $statusLabels = [
                 <div class="card-body p-4">
                     <h5 class="fw-bold mb-4"><i class="bi bi-clock-history me-2"></i> Activités</h5>
                     <div class="timeline-custom" style="max-height: 70vh; overflow-y: auto; padding-right: 8px;">
-                        @foreach($activities as $activity)
-                            <!-- {{-- Création du ticket (affichage système à gauche) --}}
-                            @if($activity['type'] === 'ticket')
-                                <div class="d-flex gap-3 mb-4">
-                                    <div class="flex-shrink-0">
-                                        <div class="bg-primary bg-gradient rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
-                                            <i class="bi bi-ticket-perforated text-white fs-5"></i>
-                                        </div>
-                                    </div>
-                                    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                                        <small class="text-muted d-block mb-1">
-                                            Ticket créé par <strong>{{ $activity['data']->user->name ?? 'Utilisateur' }}</strong>
-                                        </small>
-                                        <p class="mb-0">{{ $activity['data']->description }}</p>
-                                    </div>
-                                </div>
-                            @endif -->
+    @foreach($activities as $activity)
 
-@if($activity['type'] === 'reopen')
-
-<div class="d-flex gap-3 mb-4">
-
-    <div class="flex-shrink-0">
-        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center"
-             style="width:42px;height:42px;">
-            <i class="bi bi-arrow-counterclockwise text-white"></i>
+        {{-- RÉOUVERTURE --}}
+        @if($activity['type'] === 'reopen')
+        <div class="d-flex gap-3 mb-4">
+            <div class="flex-shrink-0">
+                <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                    <i class="bi bi-arrow-counterclockwise text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+                <small class="text-muted d-block mb-1">
+                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
+                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
+                </small>
+                <p class="mb-1">{{ $activity['data']->message }}</p>
+                @if($activity['data']->attachment_path)
+                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-warning rounded-pill mt-1">
+                        <i class="bi bi-paperclip me-1"></i> Voir la pièce jointe
+                    </a>
+                @endif
+            </div>
         </div>
-    </div>
-
-    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-
-        <small class="text-muted d-block mb-1">
-            {{ $activity['data']->user->name ?? 'Utilisateur' }}
-
-            <span class="float-end">
-                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
-            </span>
-        </small>
-
-        <p class="mb-0">
-            {{ $activity['data']->message }}
-        </p>
-
-    </div>
-
-</div>
-
-@endif
-
-@if($activity['type'] === 'resolution')
-<div class="d-flex justify-content-end gap-3 mb-4">
-    <div class="flex-shrink-0">
-        <div class="bg-success rounded-circle d-flex align-items-center justify-content-center"
-             style="width:42px;height:42px;">
-            <i class="bi bi-check2-circle me-1 text-white"></i>
-        </div>
-    </div>
-
-    <div class="flex-grow-1 bg-success text-white rounded-4 p-3 shadow-sm">
-
-        <small class="opacity-75 d-block mb-1">
-            {{ $activity['data']->user->name ?? 'Utilisateur' }}
-            <span class="float-end">
-                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
-            </span>
-        </small>
-
-        <div class="fw-bold mb-2"> Ticket resolu </div>
-
-        <p class="mb-2">
-            {{ $activity['data']->message }}
-        </p>
-
-        @if($activity['data']->attachment_path)
-            <a href="{{ asset('storage/'.$activity['data']->attachment_path) }}"
-               class="btn btn-sm btn-light rounded-pill">
-                Voir fichier
-            </a>
         @endif
 
-    </div>
-</div>
-@endif
-
-                            {{-- Assignation --}}
-@if($activity['type'] === 'comment')
-
-<div class="d-flex gap-3 mb-4">
-
-    <div class="flex-shrink-0">
-        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center"
-             style="width:42px;height:42px;">
-            <i class="bi bi-chat text-white"></i>
+        {{-- RÉSOLUTION --}}
+        @if($activity['type'] === 'resolution')
+        <div class="d-flex justify-content-end gap-3 mb-4">
+            <div class="flex-shrink-0">
+                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                    <i class="bi bi-check2-circle text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 bg-success text-white rounded-4 p-3 shadow-sm">
+                <small class="opacity-75 d-block mb-1">
+                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
+                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
+                </small>
+                <div class="fw-bold mb-2">Ticket résolu</div>
+                <p class="mb-2">{{ $activity['data']->message }}</p>
+                @if($activity['data']->attachment_path)
+                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-light rounded-pill mt-1">
+                        <i class="bi bi-paperclip me-1"></i> Voir la pièce jointe
+                    </a>
+                @endif
+            </div>
         </div>
-    </div>
+        @endif
 
-    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-
-        <small class="text-muted d-block mb-1">
-            {{ $activity['data']->user->name ?? 'Utilisateur' }}
-
-            <span class="float-end">
-                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
-            </span>
-        </small>
-
-        <p class="mb-0">
-            {{ $activity['data']->message }}
-        </p>
-
-    </div>
-
-</div>
-
-@endif
-                            {{-- Document (système, à gauche) --}}
-                           @if($activity['type'] === 'document')
-
-<div class="d-flex gap-3 mb-4">
-
-    <div class="flex-shrink-0">
-        <div class="bg-info rounded-circle d-flex align-items-center justify-content-center"
-             style="width:42px;height:42px;">
-            <i class="bi bi-file-earmark-text text-white"></i>
+        {{-- COMMENTAIRE --}}
+        @if($activity['type'] === 'comment')
+        <div class="d-flex gap-3 mb-4">
+            <div class="flex-shrink-0">
+                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                    <i class="bi bi-chat text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+                <small class="text-muted d-block mb-1">
+                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
+                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
+                </small>
+                <p class="mb-1">{{ $activity['data']->message }}</p>
+                @if(isset($activity['data']->attachment_path) && $activity['data']->attachment_path)
+                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill mt-1">
+                        <i class="bi bi-paperclip me-1"></i> Voir la pièce jointe
+                    </a>
+                @endif
+            </div>
         </div>
-    </div>
+        @endif
 
-    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+        {{-- DOCUMENT --}}
+        @if($activity['type'] === 'document')
+        <div class="d-flex gap-3 mb-4">
+            <div class="flex-shrink-0">
+                <div class="bg-info rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                    <i class="bi bi-file-earmark-text text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+                <small class="text-muted d-block mb-1">
+                    {{ $activity['data']->uploader->name }}
+                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
+                </small>
+                <a href="{{ asset('storage/'.$activity['data']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill">
+                    <i class="bi bi-download me-1"></i> {{ $activity['data']->file_name }}
+                </a>
+            </div>
+        </div>
+        @endif
 
-        <small class="text-muted d-block mb-1">
-            {{ $activity['data']->uploader->name }}
-            <span class="float-end">
-                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
-            </span>
-        </small>
+        {{-- MISE EN ATTENTE --}}
+        @if($activity['type'] === 'hold')
+        <div class="d-flex gap-3 mb-4">
+            <div class="flex-shrink-0">
+                <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                    <i class="bi bi-pause text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+                <small class="text-muted d-block mb-1">
+                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
+                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
+                </small>
+                <p class="mb-1">{{ $activity['data']->message }}</p>
+                @if($activity['data']->attachment_path)
+                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-warning rounded-pill mt-1">
+                        <i class="bi bi-paperclip me-1"></i> Voir la pièce jointe
+                    </a>
+                @endif
+            </div>
+        </div>
+        @endif
 
-        <a href="{{ asset('storage/'.$activity['data']->file_path) }}"
-           class="btn btn-sm btn-outline-dark rounded-pill">
-            {{ $activity['data']->file_name }}
-        </a>
+        {{-- TRANSFERT --}}
+        @if($activity['type'] === 'transfer')
+        <div class="d-flex gap-3 mb-4">
+            <div class="flex-shrink-0">
+                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                    <i class="bi bi-send text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+                <small class="text-muted d-block mb-1">
+                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
+                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
+                </small>
+                <p class="mb-1">{{ $activity['data']->message }}</p>
+                @if($activity['data']->attachment_path)
+                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill mt-1">
+                        <i class="bi bi-paperclip me-1"></i> Fiche problème
+                    </a>
+                @endif
+                @if($activity['data']->attachment2_path)
+                    <a href="{{ asset('storage/' . $activity['data']->attachment2_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill mt-1 ms-2">
+                        <i class="bi bi-paperclip me-1"></i> Ordre de service
+                    </a>
+                @endif
+            </div>
+        </div>
+        @endif
 
-    </div>
+        {{-- ASSIGNATION TECHNICIENS --}}
+        @if($activity['type'] === 'assignment')
+        <div class="d-flex gap-3 mb-4">
+            <div class="flex-shrink-0">
+                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                    <i class="bi bi-people text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+                <small class="text-muted d-block mb-1">
+                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
+                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
+                </small>
+                <p class="mb-1">{{ $activity['data']->message }}</p>
+            </div>
+        </div>
+        @endif
 
+        {{-- DÉMARRAGE --}}
+        @if($activity['type'] === 'start')
+        <div class="d-flex gap-3 mb-4">
+            <div class="flex-shrink-0">
+                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                    <i class="bi bi-play-circle-fill text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+                <small class="text-muted d-block mb-1">
+                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
+                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
+                </small>
+                <p class="mb-1">Traitement démarré</p>
+            </div>
+        </div>
+        @endif
+
+        {{-- REPRISE --}}
+        @if($activity['type'] === 'resume')
+        <div class="d-flex gap-3 mb-4">
+            <div class="flex-shrink-0">
+                <div class="bg-info rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                    <i class="bi bi-play-circle text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+                <small class="text-muted d-block mb-1">
+                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
+                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
+                </small>
+                <p class="mb-1">Traitement repris</p>
+            </div>
+        </div>
+        @endif
+
+        {{-- CLÔTURE --}}
+        @if($activity['type'] === 'close')
+        <div class="d-flex gap-3 mb-4">
+            <div class="flex-shrink-0">
+                <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                    <i class="bi bi-lock-fill text-white"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+                <small class="text-muted d-block mb-1">
+                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
+                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
+                </small>
+                <p class="mb-1">Ticket clôturé</p>
+            </div>
+        </div>
+        @endif
+
+    @endforeach
 </div>
-
-@endif
-
-@if($activity['type'] === 'hold')
-<div class="d-flex gap-3 mb-4">
-
-    <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center"
-         style="width:42px;height:42px;">
-        <i class="bi bi-pause text-white"></i>
-    </div>
-
-    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-
-        <small class="text-muted d-block mb-1">
-            {{ $activity['data']->user->name }}
-            <span class="float-end">
-                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
-            </span>
-        </small>
-
-        <p class="mb-0">
-            {{ $activity['data']->message }}
-        </p>
-
-    </div>
-
-</div>
-@endif
-                        @endforeach
-                    </div>
                 </div>
             </div>
         </div>
@@ -551,33 +605,103 @@ $statusLabels = [
     </div>
 </div>
 
-{{-- Modal Transfer --}}
+{{-- Modal Transfert unifié --}}
 <div class="modal fade" id="transferModal" tabindex="-1">
-    <div class="modal-dialog">
-        <form method="POST" action="{{ route('tickets.transfer', $ticket->id) }}">
+    <div class="modal-dialog modal-lg">
+        <form method="POST" action="{{ route('tickets.transfer', $ticket->id) }}" enctype="multipart/form-data" id="transferForm">
             @csrf @method('PATCH')
-
             <div class="modal-content border-0 rounded-4">
                 <div class="modal-header">
                     <h5 class="modal-title">Transférer le ticket</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body">
-                    
-                    <label class="form-label">Nouveau superviseur</label>
+                    @if($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                    <select name="user_id" class="form-select" required>
-        @foreach($supervisors as $user)
-            <option value="{{ $user->id }}">
-                {{ $user->name }}
-            </option>
-        @endforeach
-    </select>
+                    {{-- Type de transfert --}}
+                    <div class="mb-3">
+                        <label class="form-label">Type de transfert</label>
+                        <select name="target_type" id="targetType" class="form-select" required>
+                            <option value="user">Autre unité ENEO</option>
+                            <option value="company">Entreprise externe</option>
+                        </select>
+                    </div>
+
+                    {{-- Champs communs (motif) --}}
+                    <div class="mb-3">
+                        <label>Motif du transfert</label>
+                        <textarea name="reason" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    {{-- SECTION POUR AUTRE UNITÉ ENEO --}}
+                    <div id="userSection">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label>Unité</label>
+                                <select id="unitTransfer" class="form-select">
+                                    <option value="">-- Sélectionner --</option>
+                                    @foreach($units as $unit)
+                                        <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Agence</label>
+                                <select id="agencyTransfer" class="form-select">
+                                    <option value="">-- Sélectionner --</option>
+                                    @foreach($agencies as $agency)
+                                        <option value="{{ $agency->id }}">{{ $agency->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label>Superviseur (ENEO)</label>
+                            <select name="user_id" id="supervisorTransfer" class="form-select">
+                                <option value="">-- Sélectionner d'abord unité et agence --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- SECTION POUR ENTREPRISE EXTERNE --}}
+                    <div id="companySection" style="display: none;">
+                        <div class="mb-3">
+                            <label>Entreprise</label>
+                            <select name="company_id" id="companySelect" class="form-select">
+    <option value="">-- Sélectionner --</option>
+    @foreach($companies as $company)
+        @if($company->name !== 'ENEO')
+            <option value="{{ $company->id }}">{{ $company->name }}</option>
+        @endif
+    @endforeach
+</select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Superviseur (entreprise)</label>
+                            <select name="user_id" id="companySupervisorSelect" class="form-select" disabled>
+                                <option value="">-- Sélectionnez d'abord une entreprise --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Fiche problème</label>
+                            <input type="file" name="attachment1" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                        <div class="mb-3">
+                            <label>Ordre de service</label>
+                            <input type="file" name="attachment2" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                    </div>
                 </div>
-
                 <div class="modal-footer">
-                    <button class="btn btn-primary">Transférer</button>
+                    <button type="submit" class="btn btn-primary">Transférer</button>
                 </div>
             </div>
         </form>
@@ -764,31 +888,82 @@ $statusLabels = [
 
 @endsection
 
-{{-- Ajout d'un peu de CSS personnalisé pour les transitions et le hover --}}
-@push('styles')
-<style>
-    .hover-shadow {
-        transition: box-shadow 0.2s ease-in-out, transform 0.2s ease;
-    }
-    .hover-shadow:hover {
-        box-shadow: 0 1rem 2rem rgba(0,0,0,0.08) !important;
-        transform: translateY(-2px);
-    }
-    .timeline-custom::-webkit-scrollbar {
-        width: 6px;
-    }
-    .timeline-custom::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-    .timeline-custom::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 10px;
-    }
-    .timeline-custom::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const targetType = document.getElementById('targetType');
+    const userSection = document.getElementById('userSection');
+    const companySection = document.getElementById('companySection');
+    const unitSelect = document.getElementById('unitTransfer');
+    const agencySelect = document.getElementById('agencyTransfer');
+    const supervisorSelect = document.getElementById('supervisorTransfer');
+    const companySelect = document.getElementById('companySelect');
+    const companySupervisorSelect = document.getElementById('companySupervisorSelect');
+
+    const allSupervisors = @json($supervisors);
+    const supervisorsByCompany = @json($supervisorsByCompany);
+
+    // Filtrage superviseurs ENEO
+    function loadSupervisors() {
+        const unitId = unitSelect.value;
+        const agencyId = agencySelect.value;
+        supervisorSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
+        if (!unitId || !agencyId) return;
+        const filtered = allSupervisors.filter(sup => 
+            sup.unit_id == unitId && sup.agency_id == agencyId && sup.company_id == 1
+        );
+        filtered.forEach(sup => {
+            const option = document.createElement('option');
+            option.value = sup.id;
+            option.textContent = sup.name;
+            supervisorSelect.appendChild(option);
+        });
     }
 
-    
-</style>
+    unitSelect.addEventListener('change', loadSupervisors);
+    agencySelect.addEventListener('change', loadSupervisors);
+
+    // Chargement superviseurs d'entreprise
+    function loadCompanySupervisors() {
+        const companyId = companySelect.value;
+        if (!companyId) {
+            companySupervisorSelect.innerHTML = '<option value="">-- Sélectionnez une entreprise --</option>';
+            companySupervisorSelect.disabled = true;
+            return;
+        }
+        const supervisors = supervisorsByCompany[companyId] || [];
+        companySupervisorSelect.disabled = false;
+        let options = '<option value="">-- Sélectionner --</option>';
+        supervisors.forEach(sup => {
+            options += `<option value="${sup.id}">${sup.name}</option>`;
+        });
+        companySupervisorSelect.innerHTML = options;
+    }
+
+    companySelect.addEventListener('change', loadCompanySupervisors);
+
+    // Basculer l'affichage des sections et gérer les champs requis
+    function toggleSections() {
+        const isUser = targetType.value === 'user';
+        userSection.style.display = isUser ? 'block' : 'none';
+        companySection.style.display = isUser ? 'none' : 'block';
+        
+        // Gérer les fichiers requis pour l'entreprise externe
+        const fileInputs = document.querySelectorAll('#companySection input[type="file"]');
+        if (isUser) {
+            fileInputs.forEach(input => {
+                input.removeAttribute('required');
+                input.value = '';
+            });
+            // Désactiver le select superviseur entreprise
+            companySupervisorSelect.disabled = true;
+        } else {
+            fileInputs.forEach(input => input.setAttribute('required', 'required'));
+        }
+    }
+
+    targetType.addEventListener('change', toggleSections);
+    toggleSections();
+});
+</script>
 @endpush

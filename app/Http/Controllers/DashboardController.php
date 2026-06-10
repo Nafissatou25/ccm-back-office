@@ -17,7 +17,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         $role = strtolower($user->role->name ?? 'client');
 
-        if (!in_array($role, ['manager', 'admin', 'customer_service'])) {
+        if (!in_array($role, ['manager', 'admin', 'customer_service', 'supervisor'])) {
         abort(403, 'Accès non autorisé à ce tableau de bord.');
     }
 
@@ -29,48 +29,57 @@ class DashboardController extends Controller
             ? Carbon::parse($request->end_date)->endOfDay()
             : now()->endOfMonth();
 
-        // ----- Filtre unité -----
-        $selectedUnitId = $request->filled('unit_id') ? (int)$request->unit_id : null;
+        // ----- Filtre unité (seulement pour manager ou admin) -----
+    $selectedUnitId = null;
+    if (in_array($role, ['admin', 'manager']) && $request->filled('unit_id')) {
+        $selectedUnitId = (int)$request->unit_id;
+    }
 
-        // ----- Filtre type -----
-       // ----- Filtre type : limiter aux types de l'unité sélectionnée -----
-if ($role === 'manager') {
-    $unitIdForTypes = $user->unit_id;
-} else {
-    $unitIdForTypes = $selectedUnitId;
-}
+        // ----- Filtre type : selon le contexte -----
+    // Déterminer l'unité de référence pour les types
+    $unitForTypes = null;
+    if (in_array($role, ['admin', 'manager'])) {
+        // Manager/admin : si une unité est sélectionnée dans le filtre, on l'utilise, sinon null (tous types)
+        $unitForTypes = $selectedUnitId;
+    } else { // supervisor
+        // Superviseur : uniquement les types de son unité
+        $unitForTypes = $user->unit_id;
+    }
 
-if ($unitIdForTypes) {
-    $eligibleTypes = Type::where('unit_id', $unitIdForTypes)->orderBy('name')->get();
-} else {
-    $eligibleTypes = Type::orderBy('name')->get();
-}
+    // Récupérer les types éligibles
+    if ($unitForTypes) {
+        $eligibleTypes = Type::where('unit_id', $unitForTypes)->orderBy('name')->get();
+    } else {
+        $eligibleTypes = Type::orderBy('name')->get();
+    }
 
-$selectedTypeId = $request->filled('type_id') ? (int)$request->type_id : null;
-if ($selectedTypeId && !$eligibleTypes->contains('id', $selectedTypeId)) {
-    $selectedTypeId = null;
-}
+    $selectedTypeId = $request->filled('type_id') ? (int)$request->type_id : null;
+    if ($selectedTypeId && !$eligibleTypes->contains('id', $selectedTypeId)) {
+        $selectedTypeId = null;
+    }
 
 
 
         // ----- Requête de base (période + restrictions par rôle) -----
-        $baseQuery = Ticket::whereBetween('created_at', [$startDate, $endDate]);
+    $baseQuery = Ticket::whereBetween('created_at', [$startDate, $endDate]);
 
-        if ($role === 'technicien') {
-            $baseQuery->where('assigned_to', $user->id);
-       }  elseif ($role === 'client') {
-            $baseQuery->where('created_by', $user->id);
-        }
+    if ($role === 'technicien') {
+        $baseQuery->where('assigned_to', $user->id);
+    } elseif ($role === 'client') {
+        $baseQuery->where('created_by', $user->id);
+    } elseif ($role === 'supervisor') {
+        $baseQuery->where('unit_id', $user->unit_id);
+    }
 
-        // Appliquer le filtre unité (sauf pour manager déjà limité)
-        if ($selectedUnitId && $role !== 'manager') {
-            $baseQuery->where('unit_id', $selectedUnitId);
-        }
+        // Appliquer le filtre unité si présent et si rôle manager/admin
+    if ($selectedUnitId && in_array($role, ['admin', 'manager'])) {
+        $baseQuery->where('unit_id', $selectedUnitId);
+    }
 
-        // Appliquer le filtre type
-        if ($selectedTypeId) {
-            $baseQuery->where('type_id', $selectedTypeId);
-        }
+    // Appliquer le filtre type
+    if ($selectedTypeId) {
+        $baseQuery->where('type_id', $selectedTypeId);
+    }
 
         // ----- Cartes principales -----
         $totalTickets = (clone $baseQuery)->count();
@@ -97,11 +106,16 @@ if ($selectedTypeId && !$eligibleTypes->contains('id', $selectedTypeId)) {
         ];
 
         // ----- Performance par unité (avec prise en compte du filtre type) -----
-        $unitQuery = Ticket::whereBetween('created_at', [$startDate, $endDate]);
-        if ($role === 'technicien') $unitQuery->where('assigned_to', $user->id);
-        if ($role === 'manager') $unitQuery->where('unit_id', $user->unit_id);
-        if ($role === 'client') $unitQuery->where('created_by', $user->id);
-        if ($selectedTypeId) $unitQuery->where('type_id', $selectedTypeId);
+    $unitQuery = Ticket::whereBetween('created_at', [$startDate, $endDate]);
+    if ($role === 'technicien') $unitQuery->where('assigned_to', $user->id);
+    if ($role === 'client') $unitQuery->where('created_by', $user->id);
+    if ($role === 'supervisor') $unitQuery->where('unit_id', $user->unit_id);
+    if ($selectedTypeId) $unitQuery->where('type_id', $selectedTypeId);
+
+    // Pour manager/admin : si une unité est filtrée, on ne montre que cette unité dans le tableau
+    if ($selectedUnitId && in_array($role, ['admin', 'manager'])) {
+        $unitQuery->where('unit_id', $selectedUnitId);
+    }
 
         $unitPerformance = Unit::withCount([
             'tickets as total_tickets' => function ($q) use ($unitQuery) {
@@ -121,11 +135,8 @@ if ($selectedTypeId && !$eligibleTypes->contains('id', $selectedTypeId)) {
         // ----- Tickets récents (10 derniers) -----
         $recentTickets = (clone $baseQuery)->latest()->take(10)->get();
 
-        // ----- Liste des unités pour le filtre (selon les droits) -----
-        $units = Unit::orderBy('name')->get();
-        if ($role === 'manager') {
-            $units = $units->filter(fn($u) => $u->id == $user->unit_id);
-        }
+        // ----- Liste des unités pour le filtre (manager/admin seulement) -----
+    $units = Unit::orderBy('name')->get();
 
         return view('dashboard', compact(
             'totalTickets',

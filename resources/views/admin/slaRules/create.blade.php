@@ -48,16 +48,16 @@
                             class="form-control"
                             required>
 
-                        <option value="LOW">LOW</option>
-                        <option value="MEDIUM">MEDIUM</option>
-                        <option value="HIGH">HIGH</option>
-                        <option value="CRITICAL">CRITICAL</option>
+                        <option value="LOW">Failble</option>
+                        <option value="MEDIUM">Moyen</option>
+                        <option value="HIGH">Elévé</option>
+                        <option value="CRITICAL">Critique</option>
 
                     </select>
                 </div>
 
                 <div class="col-md-6 mb-3">
-                    <label>Temps de réponse (minutes)</label>
+                    <label>Temps de réponse (heures)</label>
 
                     <input type="number"
                            name="response_time"
@@ -66,7 +66,7 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
-                    <label>Temps de résolution (minutes)</label>
+                    <label>Temps de résolution (heures)</label>
 
                     <input type="number"
                            name="resolution_time"

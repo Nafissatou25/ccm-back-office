@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Unit;
 use App\Models\Agency;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -24,6 +25,7 @@ class UserController extends Controller
         'roles' => Role::all(),
         'agencies' => Agency::all(),
         'units' => Unit::all(),
+        'companies' => Company::all(),
     ]);
 }
 
@@ -32,11 +34,12 @@ class UserController extends Controller
     $data = $request->validate([
         'name' => 'required|string',
         'email' => 'required|email|unique:users,email',
-        'password' => 'required|min:6',
+        'password' => 'required',
 
         'role_id' => 'required|exists:roles,id',
         'agency_id' => 'nullable|exists:agencies,id',
         'unit_id' => 'nullable|exists:units,id',
+        'company_id' => 'nullable|exists:companies,id',
     ]);
 
     $data['password'] = bcrypt($data['password']);
@@ -59,6 +62,7 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'role_id' => $request->role_id,
+            'companies' => Company::all()
         ]);
 
         return redirect()->route('admin.users.index');

@@ -21,31 +21,41 @@ class UserController extends Controller
         ]);
     }
 
+    public function create()
+{
+    $roles = \App\Models\Role::all();
+    $agencies = \App\Models\Agency::all();
+    $units = \App\Models\Unit::all();
+
+    return view('admin.users.create', compact('roles', 'agencies', 'units'));
+}
+
     /**
      * Création utilisateur
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role_id' => 'required|exists:roles,id'
-        ]);
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|string',
+        'role_id' => 'required|exists:roles,id',
+        'agency_id' => 'nullable|exists:agencies,id',
+        'unit_id' => 'nullable|exists:units,id',
+    ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role_id' => $validated['role_id']
-        ]);
+    $user = User::create([
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'password' => Hash::make($validated['password']),
+        'role_id' => $validated['role_id'],
+        'agency_id' => $validated['agency_id'] ?? null,
+        'unit_id' => $validated['unit_id'] ?? null,
+    ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Utilisateur créé avec succès',
-            'data' => $user->load('role')
-        ], 201);
-    }
+    return redirect()->route('admin.users.index')
+        ->with('success', 'Utilisateur créé');
+}
 
     /**
      * Détails utilisateur
@@ -74,7 +84,7 @@ class UserController extends Controller
                 'email',
                 Rule::unique('users')->ignore($user->id)
             ],
-            'password' => 'nullable|string|min:6',
+            'password' => 'nullable|string',
             'role_id' => 'sometimes|exists:roles,id'
         ]);
 

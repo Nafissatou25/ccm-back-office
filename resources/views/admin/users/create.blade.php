@@ -4,6 +4,16 @@
 
 @section('content')
 
+@if($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <div class="page-header">
     <h3 class="page-title">Créer un utilisateur</h3>
 </div>
@@ -62,6 +72,17 @@
                 <option value="">-- Optionnel --</option>
                 @foreach($units as $unit)
                     <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        {{-- COMPANY --}}
+        <div class="col-md-6 mb-3">
+            <label>Entreprise</label>
+            <select name="company_id" class="form-control">
+                <option value="">-- Choisir --</option>
+                @foreach($companies as $company)
+                    <option value="{{ $company->id }}">{{ $company->name }}</option>
                 @endforeach
             </select>
         </div>

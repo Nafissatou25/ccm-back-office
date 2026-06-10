@@ -12,17 +12,17 @@
             <li class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.dashboard') }}">
                     <i class="mdi mdi-view-dashboard menu-icon"></i>
-                    <span class="menu-title">Dashboard Admin</span>
+                    <span class="menu-title">Dashboard</span>
                 </a>
             </li>
 
             {{-- Dashboard Tickets (accessible aussi à l'admin) --}}
-            <li class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <!-- <li class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('dashboard') }}">
                     <i class="mdi mdi-chart-line menu-icon"></i>
                     <span class="menu-title">Dashboard</span>
                 </a>
-            </li>
+            </li> -->
 
             <li class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.users.index') }}">

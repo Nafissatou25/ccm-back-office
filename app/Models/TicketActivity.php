@@ -13,6 +13,8 @@ class TicketActivity extends Model
         'type',
         'message',
         'attachment_path',
+        'attachment2_path',   // ⬅️ Ajout
+        'attachment3_path',   // ⬅️ Ajout (si vous en avez besoin)
         'meta'
     ];
 

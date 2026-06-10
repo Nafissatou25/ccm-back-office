@@ -12,36 +12,39 @@
             </div>
 
             <form method="GET" action="{{ route('dashboard') }}" class="d-flex gap-2 flex-wrap align-items-end bg-white p-2 rounded-3 shadow-sm">
-                <div>
-                    <label class="form-label small text-muted mb-0">Du</label>
-                    <input type="date" name="start_date" value="{{ $startDate->format('Y-m-d') }}" class="form-control form-control-sm border-0 bg-light">
-                </div>
-                <div>
-                    <label class="form-label small text-muted mb-0">Au</label>
-                    <input type="date" name="end_date" value="{{ $endDate->format('Y-m-d') }}" class="form-control form-control-sm border-0 bg-light">
-                </div>
-                <!-- @if($role !== 'manager')
-                <div>
-                    <select name="unit_id" class="form-select form-select-sm border-0 bg-light" id="unitSelect">
-                        <option value="">Toutes unités</option>
-                        @foreach($units as $unit)
-                            <option value="{{ $unit->id }}" {{ $selectedUnitId == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif
-                @if($role !== 'manager')
-                <div>
-                    <select name="type_id" class="form-select form-select-sm border-0 bg-light" id="typeSelect">
-                        <option value="">Tous types</option>
-                        @foreach($eligibleTypes as $type)
-                            <option value="{{ $type->id }}" {{ $selectedTypeId == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif -->
-                <button class="btn btn-sm btn-primary rounded-pill px-3"><i class="mdi mdi-filter-outline"></i> Filtrer</button>
-            </form>
+    <div>
+        <label class="form-label small text-muted mb-0">Du</label>
+        <input type="date" name="start_date" value="{{ $startDate->format('Y-m-d') }}" class="form-control form-control-sm border-0 bg-light">
+    </div>
+    <div>
+        <label class="form-label small text-muted mb-0">Au</label>
+        <input type="date" name="end_date" value="{{ $endDate->format('Y-m-d') }}" class="form-control form-control-sm border-0 bg-light">
+    </div>
+
+    {{-- Filtre unité : visible seulement pour admin/manager --}}
+    @if(in_array($role, ['admin', 'manager']))
+    <div>
+        <select name="unit_id" class="form-select form-select-sm border-0 bg-light" id="unitSelect">
+            <option value="">Toutes unités</option>
+            @foreach($units as $unit)
+                <option value="{{ $unit->id }}" {{ $selectedUnitId == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
+            @endforeach
+        </select>
+    </div>
+    @endif
+
+    {{-- Filtre type : visible pour tous, mais les options sont déjà limitées par le contrôleur --}}
+    <div>
+        <select name="type_id" class="form-select form-select-sm border-0 bg-light" id="typeSelect">
+            <option value="">Tous types</option>
+            @foreach($eligibleTypes as $type)
+                <option value="{{ $type->id }}" {{ $selectedTypeId == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
+            @endforeach
+        </select>
+    </div>
+
+    <button class="btn btn-sm btn-primary rounded-pill px-3"><i class="mdi mdi-filter-outline"></i> Filtrer</button>
+</form>
         </div>
 
         {{-- CARTES STATUTS (tous les statuts, cliquables) --}}
@@ -233,7 +236,7 @@ new Chart(document.getElementById('statusChart'), {
         plugins: {
             legend: {
                 position: 'bottom',
-                labels: { boxWidth: 10, font: { size: 10 } }
+                labels: { boxWidth: 10, font: { size: 10 } }                                                                                             
             }
         }
     }

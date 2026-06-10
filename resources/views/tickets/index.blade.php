@@ -22,33 +22,56 @@
 @endif
 </div>
 
-{{-- CARTES STATUTS (comptes rapides) --}}
+{{-- CARTES STATUTS (comptes rapides avec lien de filtrage) --}}
 <div class="d-flex flex-wrap gap-2 mb-4">
     @php
+        $currentParams = request()->except('status', 'late'); // on garde les autres paramètres (dates, unité, type, recherche)
         $cards = [
-            
-            ['label' => 'Ouverts', 'value' => $stats['open'], 'color' => 'warning', 'icon' => 'mdi-alert-circle'],
-            ['label' => 'En cours', 'value' => $stats['inProgress'], 'color' => 'info', 'icon' => 'mdi-progress-clock'],
-            ['label' => 'Transférés', 'value' => $stats['transferred'], 'color' => 'secondary', 'icon' => 'mdi-swap-horizontal'],
-            ['label' => 'En attente', 'value' => $stats['onHold'], 'color' => 'dark', 'icon' => 'mdi-pause-circle'],
-            ['label' => 'Réouverts', 'value' => $stats['reopened'], 'color' => 'danger', 'icon' => 'mdi-repeat'],
-            ['label' => 'Résolus', 'value' => $stats['resolved'], 'color' => 'success', 'icon' => 'mdi-check-circle'],
-            ['label' => 'Clôturés', 'value' => $stats['closed'], 'color' => 'secondary', 'icon' => 'mdi-lock'],
-            ['label' => 'En retard', 'value' => $stats['late'], 'color' => 'danger', 'icon' => 'mdi-alarm-check'],
-            ['label' => 'Total', 'value' => $stats['total'], 'color' => 'primary', 'icon' => 'mdi-ticket'],
+            ['label' => 'Ouverts',    'value' => $stats['open'],        'color' => 'warning',  'icon' => 'mdi-alert-circle',     'status' => 'OPEN'],
+            ['label' => 'En cours',   'value' => $stats['inProgress'],  'color' => 'info',     'icon' => 'mdi-progress-clock',   'status' => 'IN_PROGRESS'],
+            ['label' => 'Transférés', 'value' => $stats['transferred'], 'color' => 'secondary','icon' => 'mdi-swap-horizontal',  'status' => 'TRANSFERRED'],
+            ['label' => 'En attente', 'value' => $stats['onHold'],       'color' => 'dark',     'icon' => 'mdi-pause-circle',     'status' => 'ON_HOLD'],
+            ['label' => 'Réouverts',  'value' => $stats['reopened'],     'color' => 'danger',   'icon' => 'mdi-repeat',           'status' => 'REOPENED'],
+            ['label' => 'Résolus',    'value' => $stats['resolved'],     'color' => 'success',  'icon' => 'mdi-check-circle',     'status' => 'RESOLVED'],
+            ['label' => 'Clôturés',   'value' => $stats['closed'],       'color' => 'secondary','icon' => 'mdi-lock',             'status' => 'CLOSED'],
+            ['label' => 'En retard',  'value' => $stats['late'],         'color' => 'danger',   'icon' => 'mdi-alarm-check',      'late' => 1],
+            ['label' => 'Total',      'value' => $stats['total'],        'color' => 'primary',  'icon' => 'mdi-ticket',           'status' => null],
         ];
+        $currentStatus = request('status');
+        $currentLate = request('late');
     @endphp
     @foreach($cards as $card)
-        <div class="card border-0 shadow-sm" style="min-width: 100px; flex: 1 0 auto; border-radius: 12px;">
-            <div class="card-body p-2 d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted small text-uppercase">{{ $card['label'] }}</span>
-                    <h4 class="fw-bold mb-0">{{ $card['value'] }}</h4>
-                </div>
-                <i class="mdi {{ $card['icon'] }} fs-4 text-{{ $card['color'] }}"></i>
+    @php
+        // Construire les paramètres de l'URL
+        $params = $currentParams;
+        if (isset($card['late'])) {
+            $params['late'] = 1;
+            unset($params['status']);
+        } elseif ($card['status'] === null) {
+            unset($params['status']);
+            unset($params['late']);
+        } else {
+            $params['status'] = $card['status'];
+            unset($params['late']);
+        }
+        $url = route('tickets.index', $params);
+        
+        // Éviter l'erreur "undefined array key status" pour la carte "En retard"
+        $cardStatus = $card['status'] ?? null;
+        $isActive = (isset($card['late']) && $currentLate == 1) 
+                    || ($cardStatus !== null && $currentStatus == $cardStatus) 
+                    || ($cardStatus === null && empty($currentStatus) && empty($currentLate));
+    @endphp
+    <a href="{{ $url }}" class="card border-0 shadow-sm text-decoration-none {{ $isActive ? 'border border-primary' : '' }}" style="min-width: 100px; flex: 1 0 auto; border-radius: 12px;">
+        <div class="card-body p-2 d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-muted small text-uppercase">{{ $card['label'] }}</span>
+                <h4 class="fw-bold mb-0">{{ $card['value'] }}</h4>
             </div>
+            <i class="mdi {{ $card['icon'] }} fs-4 text-{{ $card['color'] }}"></i>
         </div>
-    @endforeach
+    </a>
+@endforeach
 </div>
 <div class="card">
 

@@ -25,6 +25,7 @@ class TicketActionService
             'document',
             'transfer',
             'start',
+            'assign',
         ],
 
         'IN_PROGRESS' => [
@@ -38,6 +39,7 @@ class TicketActionService
             'comment',
             'document',
             'resume',
+            'transfer'
         ],
 
         'RESOLVED' => [

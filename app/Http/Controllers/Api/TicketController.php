@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\TicketActionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Services\TicketNotificationService;
 
 class TicketController extends Controller
 {
@@ -129,6 +130,8 @@ class TicketController extends Controller
 
         $ticket->technicians()->sync($request->technicians);
         $ticket->update(['status' => 'ASSIGNED_TO_TECHNICIANS']);
+        app(TicketNotificationService::class)->notifyAssigned($ticket);
+
 
         TicketActivity::create([
             'ticket_id' => $ticket->id,
@@ -144,124 +147,158 @@ class TicketController extends Controller
     // START
     // =========================================================
     public function start(Ticket $ticket)
-    {
-        $user = auth()->user();
+{
+    $actions = TicketActionService::allowedActions(
+        $ticket,
+        auth()->user()
+    );
 
-        if (!$ticket->technicians()->where('users.id', $user->id)->exists()) {
-            return response()->json(['message' => 'Non autorisé'], 403);
-        }
-
-        if ($ticket->status === 'IN_PROGRESS') {
-            return response()->json(['message' => 'Ticket déjà en cours'], 422);
-        }
-
-        $ticket->update([
-            'status'     => 'IN_PROGRESS',
-            'started_at' => now(),
-            'taken_by'   => $user->id,
-        ]);
-
-        return response()->json(['message' => 'Ticket démarré', 'ticket' => $ticket]);
+    if (!in_array('start', $actions)) {
+        return response()->json([
+            'message' => 'Action non autorisée'
+        ], 403);
     }
+
+    $ticket->update([
+        'status' => 'IN_PROGRESS',
+        'started_at' => now(),
+        'taken_by' => auth()->id()
+    ]);
+
+    return response()->json([
+        'message' => 'Ticket en cours de traitement',
+        'ticket' => $ticket->fresh()
+    ]);
+}
 
     // =========================================================
     // RESOLVE
     // =========================================================
     public function resolve(Request $request, Ticket $ticket)
-    {
-        $request->validate([
-            'resolution_description' => 'required|string',
-            'resolution_attachment'  => 'nullable|file|max:5120',
-        ]);
+{
+    $request->validate([
+        'resolution_description' => 'required|string',
+        'resolution_attachment' => 'nullable|file|max:5120'
+    ]);
 
-        $user = auth()->user();
+    $actions = TicketActionService::allowedActions(
+        $ticket,
+        auth()->user()
+    );
 
-        if (!$ticket->technicians()->where('users.id', $user->id)->exists()) {
-            return response()->json(['message' => 'Non autorisé'], 403);
-        }
-
-        if ($ticket->status !== 'IN_PROGRESS') {
-            return response()->json(['message' => 'Le ticket doit être en cours'], 422);
-        }
-
-        $attachmentPath = null;
-        if ($request->hasFile('resolution_attachment')) {
-            $attachmentPath = $request->file('resolution_attachment')->store('resolutions', 'public');
-        }
-
-        $ticket->update([
-            'resolution_note' => $request->resolution_description,
-            'resolved_at'     => now(),
-            'status'          => 'RESOLVED',
-        ]);
-
-        TicketActivity::create([
-            'ticket_id'       => $ticket->id,
-            'user_id'         => $user->id,
-            'type'            => 'resolution',
-            'message'         => $request->resolution_description,
-            'attachment_path' => $attachmentPath,
-        ]);
-
-        return response()->json(['message' => 'Ticket résolu', 'ticket' => $ticket]);
+    if (!in_array('resolve', $actions)) {
+        return response()->json([
+            'message' => 'Action non autorisée'
+        ], 403);
     }
+
+    $attachmentPath = null;
+
+    if ($request->hasFile('resolution_attachment')) {
+        $attachmentPath = $request
+            ->file('resolution_attachment')
+            ->store('resolutions', 'public');
+    }
+
+    $ticket->update([
+        'resolution_note' => $request->resolution_description,
+        'resolved_at' => now(),
+        'status' => 'RESOLVED',
+    ]);
+
+    TicketActivity::create([
+        'ticket_id' => $ticket->id,
+        'user_id' => auth()->id(),
+        'type' => 'resolution',
+        'message' => $request->resolution_description,
+        'attachment_path' => $attachmentPath,
+    ]);
+
+    app(TicketNotificationService::class)->notifyResolved($ticket);
+
+    return response()->json([
+        'message' => 'Ticket résolu avec succès',
+        'ticket' => $ticket->fresh()
+    ]);
+}
 
     // =========================================================
     // CLOSE
     // =========================================================
     public function closeTicket(Ticket $ticket)
-    {
-        $user = auth()->user();
-        $role = strtoupper($user->role?->name);
+{
+    $actions = TicketActionService::allowedActions(
+        $ticket,
+        auth()->user()
+    );
 
-        if (!in_array($role, ['CUSTOMER_SERVICE', 'SUPERVISOR', 'MANAGER', 'ADMIN'])) {
-            return response()->json(['message' => 'Non autorisé'], 403);
-        }
-
-        if ($ticket->status !== 'RESOLVED') {
-            return response()->json(['message' => 'Le ticket doit être RESOLVED avant clôture'], 422);
-        }
-
-        $ticket->update([
-            'status'    => 'CLOSED',
-            'closed_at' => now(),
-            'closed_by' => $user->id,
-        ]);
-
-        return response()->json(['message' => 'Ticket clôturé', 'ticket' => $ticket]);
+    if (!in_array('close', $actions)) {
+        return response()->json([
+            'message' => 'Action non autorisée'
+        ], 403);
     }
+
+    $ticket->update([
+        'status' => 'CLOSED',
+        'closed_at' => now(),
+        'closed_by' => auth()->id()
+    ]);
+
+    app(TicketNotificationService::class)->notifyClosed($ticket);
+
+    return response()->json([
+        'message' => 'Ticket clôturé',
+        'ticket' => $ticket->fresh()
+    ]);
+}
 
     // =========================================================
     // HOLD
     // =========================================================
     public function hold(Request $request, Ticket $ticket)
-    {
-        $request->validate([
-            'reason'     => 'required|string|min:5',
-            'attachment' => 'nullable|file|max:5120',
-        ]);
+{
+    $request->validate([
+        'reason' => 'required|string',
+        'attachment' => 'nullable|file|max:5120'
+    ]);
 
-        $path = null;
-        if ($request->hasFile('attachment')) {
-            $path = $request->file('attachment')->store('ticket-holds', 'public');
-        }
+    $actions = TicketActionService::allowedActions(
+        $ticket,
+        auth()->user()
+    );
 
-        $ticket->update([
-            'status'        => 'ON_HOLD',
-            'is_sla_paused' => true,
-            'sla_paused_at' => now(),
-        ]);
-
-        TicketActivity::create([
-            'ticket_id'       => $ticket->id,
-            'user_id'         => auth()->id(),
-            'type'            => 'hold',
-            'message'         => $request->reason,
-            'attachment_path' => $path,
-        ]);
-
-        return response()->json(['message' => 'Ticket mis en attente', 'ticket' => $ticket]);
+    if (!in_array('hold', $actions)) {
+        return response()->json([
+            'message' => 'Action non autorisée'
+        ], 403);
     }
+
+    $path = null;
+
+    if ($request->hasFile('attachment')) {
+        $path = $request->file('attachment')
+            ->store('ticket-holds', 'public');
+    }
+
+    $ticket->update([
+        'status' => 'ON_HOLD',
+        'is_sla_paused' => true,
+        'sla_paused_at' => now(),
+    ]);
+
+    TicketActivity::create([
+        'ticket_id' => $ticket->id,
+        'user_id' => auth()->id(),
+        'type' => 'hold',
+        'message' => $request->reason,
+        'attachment_path' => $path,
+    ]);
+
+    return response()->json([
+        'message' => 'Ticket mis en attente',
+        'ticket' => $ticket->fresh()
+    ]);
+}
 
     // =========================================================
     // RESUME
@@ -330,35 +367,90 @@ class TicketController extends Controller
     // REOPEN
     // =========================================================
     public function reopen(Request $request, Ticket $ticket)
-    {
-        $request->validate([
-            'reason'     => 'required|string|min:5',
-            'attachment' => 'nullable|file|max:5120',
-        ]);
+{
+    $request->validate([
+        'reason' => 'required|string',
+        'attachment' => 'nullable|file|max:5120'
+    ]);
 
-        $role = strtoupper(auth()->user()->role?->name);
+    $actions = TicketActionService::allowedActions(
+        $ticket,
+        auth()->user()
+    );
 
-        if (!in_array($role, ['CUSTOMER_SERVICE', 'SUPERVISOR', 'MANAGER', 'ADMIN'])) {
-            return response()->json(['message' => 'Non autorisé'], 403);
-        }
-
-        $path = null;
-        if ($request->hasFile('attachment')) {
-            $path = $request->file('attachment')->store('ticket-reopens', 'public');
-        }
-
-        $ticket->update(['status' => 'REOPENED']);
-
-        TicketActivity::create([
-            'ticket_id'       => $ticket->id,
-            'user_id'         => auth()->id(),
-            'type'            => 'reopen',
-            'message'         => $request->reason,
-            'attachment_path' => $path,
-        ]);
-
-        return response()->json(['message' => 'Ticket réouvert', 'ticket' => $ticket]);
+    if (!in_array('reopen', $actions)) {
+        return response()->json([
+            'message' => 'Action non autorisée'
+        ], 403);
     }
+
+    $path = null;
+
+    if ($request->hasFile('attachment')) {
+        $path = $request->file('attachment')
+            ->store('ticket-reopens', 'public');
+    }
+
+    $ticket->update([
+        'status' => 'REOPENED'
+    ]);
+
+    TicketActivity::create([
+        'ticket_id' => $ticket->id,
+        'user_id' => auth()->id(),
+        'type' => 'reopen',
+        'message' => $request->reason,
+        'attachment_path' => $path,
+    ]);
+
+    app(TicketNotificationService::class)->notifyReopened($ticket);
+
+    return response()->json([
+        'message' => 'Ticket réouvert',
+        'ticket' => $ticket->fresh()
+    ]);
+}
+
+public function addDocument(Request $request, Ticket $ticket)
+{
+    $actions = TicketActionService::allowedActions(
+        $ticket,
+        auth()->user()
+    );
+
+    if (!in_array('document', $actions)) {
+        return response()->json([
+            'message' => 'Action non autorisée'
+        ], 403);
+    }
+
+    $request->validate([
+        'file' => 'required|file|max:5120',
+        'description' => 'nullable|string'
+    ]);
+
+    $path = $request->file('file')
+        ->store('ticket-documents', 'public');
+
+    $document = $ticket->documents()->create([
+        'uploaded_by' => auth()->id(),
+        'path' => $path,
+        'description' => $request->description,
+    ]);
+
+    TicketActivity::create([
+        'ticket_id' => $ticket->id,
+        'user_id' => auth()->id(),
+        'type' => 'document',
+        'message' => $request->description ?? 'Document ajouté',
+        'attachment_path' => $path,
+    ]);
+
+    return response()->json([
+        'message' => 'Document ajouté avec succès',
+        'document' => $document
+    ]);
+}
 
     // =========================================================
     // CHANGE STATUS (générique)

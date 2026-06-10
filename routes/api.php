@@ -39,6 +39,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/fcm-token', [AuthController::class, 'updateFcmToken']);
+    Route::post('/onesignal-player-id', [App\Http\Controllers\Api\AuthController::class, 'updateOneSignalPlayerId']);
 
     /*
     |--------------------------------------------------------------------------
@@ -101,6 +103,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Réouverture
     Route::patch('/tickets/{ticket}/reopen',  [TicketController::class, 'reopen']);
 
+    Route::post(
+    '/tickets/{ticket}/documents',
+    [TicketController::class, 'addDocument']
+);
+
     // Changement de statut générique
     Route::post('/tickets/{ticket}/status',   [TicketController::class, 'changeStatus']);
 
@@ -123,6 +130,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tickets/{ticket}/documents',     [TicketDocumentController::class, 'store']);
     Route::get('/documents/{document}/download',   [TicketDocumentController::class, 'download']);
 
+    Route::get('/supervisors/filter', [App\Http\Controllers\TicketController::class, 'filterSupervisors']);
+Route::get('/companies/{company}/supervisors', [App\Http\Controllers\CompanyController::class, 'supervisors']);
     /*
     |--------------------------------------------------------------------------
     | ADMIN PANEL
