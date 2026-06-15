@@ -12,41 +12,30 @@ class TicketActionService
 
     $actions = match ($ticket->status) {
 
-        'OPEN', 'REOPENED', 'REJECTED' => [
-            'comment',
-            'document',
-            'assign',
-            'transfer',
-            'start',
-        ],
-
-        'ASSIGNED', 'TRANSFERRED', 'ASSIGNED_TO_TECHNICIANS' => [
-            'comment',
-            'document',
-            'transfer',
+        'OPEN', 'REOPENED', 'REJECTED', 'ASSIGNED', 'TRANSFERRED', 'ASSIGNED_TO_TECHNICIANS' => [
             'start',
             'assign',
+            'transfer',
+            'comment',
         ],
 
         'IN_PROGRESS' => [
-            'comment',
             'document',
             'resolve',
             'hold',
+            'comment',
         ],
 
         'ON_HOLD' => [
-            'comment',
-            'document',
             'resume',
-            'transfer'
+            'transfer',
+            'comment',
         ],
 
         'RESOLVED' => [
-            'comment',
-            'document',
             'close',
             'reopen',
+            'comment',
         ],
 
         'CLOSED' => [

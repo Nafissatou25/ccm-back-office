@@ -42,3 +42,50 @@
 .sidebar .nav .nav-item.active > .nav-link i {
     color: #2d2961 !important;
 }
+
+/* ==========================
+   SIDEBAR FIXE
+========================== */
+
+.sidebar {
+    position: fixed !important;
+    top: 50px; /* hauteur navbar */
+    left: 0;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+/* Décaler le contenu principal */
+.main-panel {
+    margin-left: 220px !important; /* largeur sidebar */
+}
+
+/* ==========================
+   HEADER DE PAGE STICKY
+========================== */
+
+.page-header {
+    position: sticky;
+    top: 70px; /* juste sous la navbar */
+    z-index: 999;
+    background: #f4f5f7;
+    padding: 15px 0;
+    margin-bottom: 20px;
+}
+
+.page-header .page-title {
+    margin: 0;
+}
+
+.navbar {
+    position: fixed !important;
+    top: 0;
+    width: 100%;
+    z-index: 1100;
+}
+
+.content-wrapper {
+    padding-top: 20px;
+}
+

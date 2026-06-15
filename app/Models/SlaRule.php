@@ -10,14 +10,20 @@ class SlaRule extends Model
 
     protected $fillable = [
         'unit_id',
-        'priority',
-        'response_time',
-        'resolution_time',
-        'is_active'
+        'type_id',   // nullable = règle par défaut unité
+        'is_urgent',
+        'tto',
+        'ttr',
+        'is_active',
     ];
 
     public function unit()
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function type()
+    {
+        return $this->belongsTo(Type::class);
     }
 }

@@ -63,4 +63,9 @@ public function routeNotificationForOneSignal()
     return $this->onesignal_player_id;
 }
 
+public function ticketViews()
+{
+    return $this->hasMany(TicketView::class);
+}
+
 }

@@ -78,6 +78,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tickets/create', [TicketController::class, 'create'])
         ->name('tickets.create');
 
+    Route::middleware(['auth'])->post('/types/quick', [TicketController::class, 'quickStore'])->name('types.quick');
+
     Route::post('/tickets', [TicketController::class, 'store'])
         ->name('tickets.store');
 
@@ -110,6 +112,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::patch('/tickets/{ticket}/resume', [TicketController::class, 'resume'])
     ->name('tickets.resume');
+    
 
     /*
     | Comments & documents

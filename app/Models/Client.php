@@ -11,6 +11,7 @@ class Client extends Model
         'name',
         'firstname',
         'phone',
+        'whatsapp',
         'delivery_point'
     ];
 

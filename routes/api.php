@@ -87,21 +87,26 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Résolution (TECHNICIAN)
     Route::patch('/tickets/{ticket}/resolve', [TicketController::class, 'resolve']);
+    Route::post('tickets/{ticket}/resolve', [TicketController::class, 'resolve']);
 
     // Clôture (CUSTOMER_SERVICE, SUPERVISOR, MANAGER, ADMIN)
     Route::post('/tickets/{ticket}/close',    [TicketController::class, 'closeTicket']);
 
     // Mise en attente
     Route::patch('/tickets/{ticket}/hold',    [TicketController::class, 'hold']);
+    Route::post('/tickets/{ticket}/hold',    [TicketController::class, 'hold']);
 
     // Reprise après attente
     Route::patch('/tickets/{ticket}/resume',  [TicketController::class, 'resume']);
+    Route::post('/tickets/{ticket}/resume',  [TicketController::class, 'resume']);
 
     // Transfert
     Route::patch('/tickets/{ticket}/transfer', [TicketController::class, 'transfer']);
+    Route::post('/tickets/{ticket}/transfer', [TicketController::class, 'transfer']);
 
     // Réouverture
     Route::patch('/tickets/{ticket}/reopen',  [TicketController::class, 'reopen']);
+    Route::post('/tickets/{ticket}/reopen',  [TicketController::class, 'reopen']);
 
     Route::post(
     '/tickets/{ticket}/documents',

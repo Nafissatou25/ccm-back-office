@@ -141,4 +141,9 @@ public function checkSla()
         }
     }
 
+    public function views()
+{
+    return $this->hasMany(TicketView::class);
+}
+
 }

@@ -9,83 +9,75 @@ use Illuminate\Http\Request;
 
 class TypeController extends Controller
 {
-    /**
-     * LISTE
-     */
     public function index()
     {
-        $types = Type::with('unit')
-            ->latest()
-            ->get();
-
+        $types = Type::with('unit')->latest()->get();
         return view('admin.types.index', compact('types'));
     }
 
-    /**
-     * FORM CREATE
-     */
     public function create()
     {
         $units = Unit::orderBy('name')->get();
-
         return view('admin.types.create', compact('units'));
     }
 
-    /**
-     * STORE
-     */
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'name'    => 'required|string|max:255',
             'unit_id' => 'required|exists:units,id',
         ]);
+
+        $exists = Type::where('unit_id', $data['unit_id'])
+            ->where('name', $data['name'])
+            ->exists();
+
+        if ($exists) {
+            return back()
+                ->withErrors(['name' => 'Ce type existe déjà pour cette unité.'])
+                ->withInput();
+        }
 
         Type::create($data);
 
-        return redirect()
-            ->route('admin.types.index')
+        return redirect()->route('admin.types.index')
             ->with('success', 'Type créé avec succès');
     }
 
-    /**
-     * FORM EDIT
-     */
     public function edit(Type $type)
     {
         $units = Unit::orderBy('name')->get();
-
-        return view('admin.types.edit', compact(
-            'type',
-            'units'
-        ));
+        return view('admin.types.edit', compact('type', 'units'));
     }
 
-    /**
-     * UPDATE
-     */
     public function update(Request $request, Type $type)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'name'    => 'required|string|max:255',
             'unit_id' => 'required|exists:units,id',
         ]);
 
+        // Vérifier unicité en excluant le type actuel
+        $exists = Type::where('unit_id', $data['unit_id'])
+            ->where('name', $data['name'])
+            ->where('id', '!=', $type->id)
+            ->exists();
+
+        if ($exists) {
+            return back()
+                ->withErrors(['name' => 'Ce type existe déjà pour cette unité.'])
+                ->withInput();
+        }
+
         $type->update($data);
 
-        return redirect()
-            ->route('admin.types.index')
+        return redirect()->route('admin.types.index')
             ->with('success', 'Type modifié');
     }
 
-    /**
-     * DELETE
-     */
     public function destroy(Type $type)
     {
         $type->delete();
-
-        return back()
-            ->with('success', 'Type supprimé');
+        return back()->with('success', 'Type supprimé');
     }
 }

@@ -20,132 +20,334 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('tickets.store') }}" enctype="multipart/form-data" id="ticketForm">
-            @csrf
+        <form method="POST"
+      action="{{ route('tickets.store') }}"
+      enctype="multipart/form-data"
+      id="ticketForm">
 
-            {{-- SECTION 1 : INFORMATIONS CLIENT --}}
-            <div class="card mb-4 border-secondary">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">📋 Informations client</h5>
+    @csrf
+
+    <!-- ========================= -->
+    <!-- INFORMATIONS CLIENT -->
+    <!-- ========================= -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="mdi mdi-account"></i>
+                Informations client
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label>Nom <span class="text-danger">*</span></label>
+                    <input type="text"
+                           name="client_name"
+                           class="form-control"
+                           value="{{ old('client_name') }}"
+                           required>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label>Nom <span class="text-danger">*</span></label>
-                            <input type="text" name="client_name" class="form-control @error('client_name') is-invalid @enderror" value="{{ old('client_name') }}" required>
-                            @error('client_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+
+                <div class="col-md-4 mb-3">
+                    <label>Prénom</label>
+                    <input type="text"
+                           name="client_firstname"
+                           class="form-control"
+                           value="{{ old('client_firstname') }}">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Téléphone <span class="text-danger">*</span></label>
+                    <input type="tel"
+                           name="client_phone"
+                           class="form-control"
+                           value="{{ old('client_phone') }}"
+                           required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>WhatsApp</label>
+                    <input type="tel"
+                           name="client_whatsapp"
+                           class="form-control"
+                           value="{{ old('client_whatsapp') }}">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Numéro contrat</label>
+                    <input type="text"
+                           name="client_contract_number"
+                           class="form-control"
+                           value="{{ old('client_contract_number') }}">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Point de livraison</label>
+                    <input type="text"
+                           name="client_delivery_point"
+                           class="form-control"
+                           value="{{ old('client_delivery_point') }}">
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- RECLAMATION -->
+    <!-- ========================= -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0">
+                <i class="mdi mdi-ticket"></i>
+                Détails de la réclamation
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label>Unité <span class="text-danger">*</span></label>
+                    <select name="unit_id"
+                            id="unit_id"
+                            class="form-control"
+                            required>
+
+                        <option value="">Sélectionner</option>
+
+                        @foreach($units as $unit)
+                            <option value="{{ $unit->id }}">
+                                {{ $unit->name }}
+                            </option>
+                        @endforeach
+
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Type <span class="text-danger">*</span></label>
+
+                    <div class="input-group">
+
+                        <select name="type_id"
+                                id="type_id"
+                                class="form-control"
+                                required>
+
+                            <option value="">
+                                Sélectionner une unité
+                            </option>
+
+                        </select>
+
+                        <div class="input-group-append">
+                            <button type="button"
+                                    class="btn btn-success"
+                                    id="btnNewType">
+                                <i class="mdi mdi-plus"></i>
+                            </button>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Prénom</label>
-                            <input type="text" name="client_firstname" class="form-control @error('client_firstname') is-invalid @enderror" value="{{ old('client_firstname') }}">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Téléphone <span class="text-danger">*</span></label>
-                            <input type="tel" name="client_phone" class="form-control @error('client_phone') is-invalid @enderror" value="{{ old('client_phone') }}" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Numéro de contrat</label>
-                            <input type="text" name="client_contract_number" class="form-control @error('client_contract_number') is-invalid @enderror" value="{{ old('client_contract_number') }}">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Point de livraison</label>
-                            <input type="text" name="client_delivery_point" class="form-control @error('client_delivery_point') is-invalid @enderror" value="{{ old('client_delivery_point') }}">
-                        </div>
+
                     </div>
                 </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Agence <span class="text-danger">*</span></label>
+
+                    <select name="agency_id"
+                            id="agency_id"
+                            class="form-control"
+                            required>
+
+                        <option value="">Sélectionner</option>
+
+                        @foreach($agencies as $agency)
+                            <option value="{{ $agency->id }}">
+                                {{ $agency->name }}
+                            </option>
+                        @endforeach
+
+                    </select>
+                </div>
+
             </div>
 
-            {{-- SECTION 2 : DÉTAILS DU TICKET --}}
-            <div class="card mb-4 border-secondary">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">🎫 Détails du ticket</h5>
+            <div class="row">
+
+                <div class="col-md-12 mb-3">
+                    <label>Description <span class="text-danger">*</span></label>
+
+                    <textarea name="description"
+                              rows="5"
+                              class="form-control"
+                              required>{{ old('description') }}</textarea>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label>Unité <span class="text-danger">*</span></label>
-                            <select name="unit_id" class="form-control @error('unit_id') is-invalid @enderror" id="unit_id" required>
-                                <option value="">-- Sélectionner --</option>
-                                @foreach($units as $unit)
-                                    <option value="{{ $unit->id }}" {{ old('unit_id') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
-                                @endforeach
-                            </select>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <label>Responsable</label>
+
+                    <select name="assigned_to"
+                            id="assigned_to"
+                            class="form-control">
+
+                        <option value="">
+                            Sélectionner
+                        </option>
+
+                        @foreach($users as $user)
+                            <option value="{{ $user->id }}"
+                                    data-agency="{{ $user->agency_id }}"
+                                    data-unit="{{ $user->unit_id }}"
+                                    data-company="{{ $user->company_id }}">
+
+                                {{ $user->name }}
+
+                            </option>
+                        @endforeach
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label>Niveau d'urgence</label>
+
+                    <div>
+
+                        <div class="form-check">
+
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="is_urgent"
+                                   value="1"
+                                   id="is_urgent">
+                                   <label class="form-check-label"
+                                   for="is_urgent">
+
+                                Urgent ?
+
+                            </label>
+
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Type <span class="text-danger">*</span></label>
-                            <select name="type_id" class="form-control @error('type_id') is-invalid @enderror" id="type_id" required>
-                                <option value="">-- Sélectionner d'abord une unité --</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Agence <span class="text-danger">*</span></label>
-                            <select name="agency_id" class="form-control @error('agency_id') is-invalid @enderror" id="agency_id" required>
-                                <option value="">-- Sélectionner --</option>
-                                @foreach($agencies as $agency)
-                                    <option value="{{ $agency->id }}" {{ old('agency_id') == $agency->id ? 'selected' : '' }}>{{ $agency->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label>Description <span class="text-danger">*</span></label>
-                            <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="4" required>{{ old('description') }}</textarea>
-                        </div>
+
                     </div>
-                    <div class="row">
-                    <div class="col-md-6 mb-3">
-                            <label>Priorité <span class="text-danger">*</span></label>
-                            <select name="priority" class="form-control @error('priority') is-invalid @enderror" required>
-                                <option value="LOW" {{ old('priority') == 'LOW' ? 'selected' : '' }}>Faible</option>
-                                <option value="MEDIUM" {{ old('priority') == 'MEDIUM' ? 'selected' : '' }}>Moyenne</option>
-                                <option value="HIGH" {{ old('priority') == 'HIGH' ? 'selected' : '' }}>Grande</option>
-                                <option value="CRITICAL" {{ old('priority') == 'CRITICAL' ? 'selected' : '' }}>Critique</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label>Responsable</label>
-                            <select name="assigned_to" class="form-control @error('assigned_to') is-invalid @enderror" id="assigned_to">
-                                <option value="">-- Sélectionner --</option>
-                                @foreach($users as $user)
-                                    <option value="{{ $user->id }}"
-                                        data-agency="{{ $user->agency_id }}"
-                                        data-unit="{{ $user->unit_id }}"
-                                        data-company="{{ $user->company_id }}"
-                                        {{ old('assigned_to') == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <!-- <small class="text-muted">Seuls les superviseurs ENEO de l’agence et de l’unité sélectionnées sont affichés.</small> -->
-                        </div>
-                        </div>
+
                 </div>
+
             </div>
 
-            {{-- SECTION 4 : PIÈCE JOINTE --}}
-            <div class="card mb-4 border-secondary">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">📎 Fiche de réclamation</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label>Fichier <span class="text-danger">*</span></label>
-                            <input type="file" name="attachment_path" class="form-control-file @error('attachment_path') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png" required>
-                            <small class="text-muted">Format accepté : PDF, JPG, PNG. Taille max : 5 Mo.</small>
-                            @error('attachment_path') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
-                </div>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- PIECE JOINTE -->
+    <!-- ========================= -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+                <i class="mdi mdi-paperclip"></i>
+                Fiche de réclamation
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <div class="form-group">
+
+                <label>Pièce jointe</label>
+
+                <input type="file"
+                       name="attachment_path"
+                       class="form-control-file"
+                       accept=".pdf,.jpg,.jpeg,.png">
+
+                <small class="text-muted">
+                    PDF, JPG ou PNG (5 Mo max)
+                </small>
+
             </div>
 
-            <div class="text-right">
-                <button type="submit" class="btn btn-primary px-4">Créer le ticket</button>
-                <a href="{{ route('tickets.index') }}" class="btn btn-secondary">Annuler</a>
-            </div>
+        </div>
+    </div>
 
-        </form>
+    <!-- ========================= -->
+    <!-- BOUTONS -->
+    <!-- ========================= -->
+    <div class="text-right">
+
+        <a href="{{ route('tickets.index') }}"
+           class="btn btn-light border">
+
+            Annuler
+
+        </a>
+
+        <button type="submit"
+                class="btn btn-primary px-5">
+
+            <i class="mdi mdi-content-save"></i>
+            Créer le ticket
+
+        </button>
+
+    </div>
+
+</form>
     </div>
 </div>
+
+<!-- Modal Nouveau type -->
+<div class="modal fade" id="newTypeModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Créer un nouveau type</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger d-none" id="typeModalError"></div>
+                <div class="form-group">
+                    <label>Nom du type</label>
+                    <input type="text" id="newTypeName" class="form-control" placeholder="Ex: Panne électrique">
+                    <small class="text-muted">Le type sera associé à l’unité actuellement sélectionnée.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="saveNewType">Créer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border-radius: 12px;
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.form-control,
+.custom-select {
+    border-radius: 8px;
+}
+
+.btn {
+    border-radius: 8px;
+}
+</style>
 
 @push('scripts')
 <script>
@@ -209,6 +411,64 @@
         });
         filterSupervisors();
     });
+
+    // Nouveau type
+document.getElementById('btnNewType').addEventListener('click', function() {
+    if (!document.getElementById('unit_id').value) {
+        alert('Veuillez d’abord sélectionner une unité.');
+        return;
+    }
+    document.getElementById('newTypeName').value = '';
+    document.getElementById('typeModalError').classList.add('d-none');
+    $('#newTypeModal').modal('show');
+});
+
+document.getElementById('saveNewType').addEventListener('click', function() {
+    const unitId = document.getElementById('unit_id').value;
+    const name = document.getElementById('newTypeName').value.trim();
+    if (!name) {
+        alert('Veuillez saisir un nom.');
+        return;
+    }
+
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = 'Création...';
+
+    fetch('{{ route("types.quick") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ unit_id: unitId, name: name })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const typeSelect = document.getElementById('type_id');
+            const option = document.createElement('option');
+            option.value = data.type.id;
+            option.textContent = data.type.name;
+            typeSelect.appendChild(option);
+            typeSelect.value = data.type.id;
+            $('#newTypeModal').modal('hide');
+        } else {
+            const errorDiv = document.getElementById('typeModalError');
+            errorDiv.textContent = data.message || 'Erreur lors de la création.';
+            errorDiv.classList.remove('d-none');
+        }
+    })
+    .catch(error => {
+        const errorDiv = document.getElementById('typeModalError');
+        errorDiv.textContent = 'Erreur réseau : ' + error;
+        errorDiv.classList.remove('d-none');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = 'Créer';
+    });
+});
 </script>
 @endpush
 @endsection

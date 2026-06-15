@@ -21,196 +21,6 @@
     </a> -->
                 <h1 class="display-6 fw-bold mb-0">
                     Ticket #{{ $ticket->id }}
-                    <!-- <button class="btn btn-outline-secondary btn-sm ms-2" onclick="navigator.clipboard.writeText('{{ $ticket->id }}')" title="Copier l'ID">
-                        <i class="bi bi-clipboard"></i>
-                    </button> -->
-                </h1>
-                <div class="dropdown">
-    <button class="btn btn-primary" type="button" data-bs-toggle="dropdown">
-        <i class="bi bi-three-dots-vertical me-1"></i> Actions
-    </button>
-
-    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
-
-        {{-- Commentaire --}}
-        @if(in_array('comment', $actions))
-        <li>
-            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#commentModal">
-                <i class="bi bi-chat-dots me-2"></i> Commentaire
-            </button>
-        </li>
-        @endif
-
-        {{-- Document --}}
-        @if(in_array('document', $actions))
-        <li>
-            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#documentModal">
-                <i class="bi bi-paperclip me-2"></i> Document
-            </button>
-        </li>
-        @endif
-
-        {{-- Assigner --}}
-        @if(in_array('assign', $actions))
-        <li>
-            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#assignModal">
-                <i class="bi bi-people me-2"></i> Assigner
-            </button>
-        </li>
-        @endif
-
-        {{-- Start / Prendre en charge --}}
-        @if(in_array('start', $actions))
-        <li>
-            <form method="POST"
-      action="{{ route('tickets.start', $ticket->id) }}"
-      onsubmit="return confirm('Confirmer le début du traitement du ticket ?')">
-                @csrf @method('PATCH')
-                <button class="dropdown-item">
-                    <i class="bi bi-play-circle me-2"></i> Démarrer le traitement
-                </button>
-            </form>
-        </li>
-        @endif
-
-        {{-- Resolve --}}
-        @if(in_array('resolve', $actions))
-        <li>
-            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#resolveModal">
-                <i class="bi bi-check2-circle me-2"></i> Résoudre
-            </button>
-        </li>
-        @endif
-
-        {{-- Close --}}
-        @if(in_array('close', $actions))
-        <li>
-            <form method="POST" action="{{ route('tickets.close', $ticket->id) }}">
-                @csrf @method('PATCH')
-                <button class="dropdown-item">
-                    <i class="bi bi-lock me-2"></i> Clôturer
-                </button>
-            </form>
-        </li>
-        @endif
-
-        {{-- Reopen --}}
-        @if(in_array('reopen', $actions))
-        <li>
-            <form method="POST" action="{{ route('tickets.reopen', $ticket->id) }}">
-                @csrf @method('PATCH')
-                <button type="button" class="dropdown-item"
-            data-bs-toggle="modal"
-            data-bs-target="#reopenModal">
-        <i class="bi bi-arrow-counterclockwise me-2"></i>
-        Réouvrir
-    </button>
-            </form>
-        </li>
-        @endif
-
-        @if(in_array('hold', $actions))
-<li>
-    <form method="POST"
-          action="{{ route('tickets.hold', $ticket->id) }}">
-        @csrf
-        @method('PATCH')
-
-        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#holdModal" type="button">
-    <i class="bi bi-pause-circle me-2"></i> Mettre en attente
-</button>
-    </form>
-</li>
-@endif
-
-@if(in_array('resume', $actions))
-<li>
-    <form method="POST"
-          action="{{ route('tickets.resume', $ticket->id) }}">
-        @csrf
-        @method('PATCH')
-
-        <button class="dropdown-item">
-            <i class="bi bi-play-circle me-2"></i>
-            Reprendre le traitement
-        </button>
-    </form>
-</li>
-@endif
-
-        {{-- Transfer --}}
-        @if(in_array('transfer', $actions))
-        <li>
-            <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#transferModal">
-                <i class="bi bi-send me-2"></i> Transférer
-            </button>
-        </li>
-        @endif
-
-    </ul>
-</div>
-            </div>
-            <p class="text-muted mt-2 mb-0">
-                Créé le {{ $ticket->created_at->format('d/m/Y à H:i') }}
-            </p>
-            <p class="text-muted mt-2 mb-0">
-                par <strong>{{ $ticket->user?->name ?? 'Utilisateur inconnu' }}</strong>
-            </p>
-        </div>
-        
-
-        {{-- Actions principales --}}
-<!-- <div class="row mt-2 g-3 mx-0">   {{-- mx-0 supprime les marges négatives de Bootstrap --}}
-        <div class="col-lg-5 px-3 px-lg-4">
-        <button class="btn btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#commentModal">
-            <i class="bi bi-chat-dots me-1"></i> Commentaire
-        </button>
-
-        <button class="btn btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#documentModal">
-            <i class="bi bi-paperclip me-1"></i> Document
-        </button>
-
-        @if(!in_array($ticket->status, ['CLOSED', 'RESOLVED']))
-        <button class="btn btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#assignModal">
-            <i class="bi bi-people me-1"></i> Assigner
-        </button>
-        @endif
-
-        @if($ticket->status === 'OPEN' || $ticket->status === 'ASSIGNED_TO_TECHNICIANS')
-        <form method="POST" action="{{ route('tickets.start', $ticket->id) }}" class="d-inline-block" onsubmit="return confirm('Confirmer la prise en charge ?');">
-            @csrf @method('PATCH')
-            <button class="btn btn-warning rounded-pill text-dark">
-                <i class="bi bi-play-circle me-1"></i> Prendre en charge
-            </button>
-        </form>
-        @endif
-
-        @if($ticket->status === 'IN_PROGRESS')
-        <button class="btn btn-success rounded-pill" data-bs-toggle="modal" data-bs-target="#resolveModal">
-            <i class="bi bi-check2-circle me-1"></i> Résoudre
-        </button>
-        @endif
-
-        @if($ticket->status === 'RESOLVED')
-        <form method="POST" action="{{ route('tickets.close', $ticket->id) }}" class="d-inline-block" onsubmit="return confirm('Clôturer définitivement ?');">
-            @csrf @method('PATCH')
-            <button class="btn btn-dark rounded-pill">
-                <i class="bi bi-lock me-1"></i> Clôturer
-            </button>
-        </form>
-        @endif
-    </div>
-</div> -->
-
-    <div class="row mt-2 g-3">
-        {{-- Colonne gauche : infos ticket --}}
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 hover-shadow transition">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i> Détails</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-3">
-    <strong>Statut :</strong><br>
 
     @php
         $statusColors = [
@@ -250,9 +60,138 @@ $statusLabels = [
     <span class="badge bg-{{ $statusColors[$ticket->status] ?? 'secondary' }}">
         {{ $statusLabels[$ticket->status] ?? $ticket->status }}
     </span>
-</li>
-                        <li class="mb-3"><strong>Description :</strong><br>{{ $ticket->description }}</li>
-                        <li class="mb-3"><strong>Unité :</strong><br>{{ $ticket->unit->name ?? 'Non définie' }}</li>
+                    <!-- <button class="btn btn-outline-secondary btn-sm ms-2" onclick="navigator.clipboard.writeText('{{ $ticket->id }}')" title="Copier l'ID">
+                        <i class="bi bi-clipboard"></i>
+                    </button> -->
+                     <p class="text-muted mt-2 mb-0">
+                Créé le {{ $ticket->created_at->format('d/m/Y à H:i') }} par <strong>{{ $ticket->user?->name ?? 'Utilisateur inconnu' }}</strong>
+            </p>
+                </h1>
+                <div class="d-flex justify-content-between align-items-center">
+
+    <div class="d-flex flex-wrap gap-2 mt-3">
+
+    <!-- @if(in_array('document', $actions))
+<button class="btn btn-outline-info"
+        data-bs-toggle="modal"
+        data-bs-target="#documentModal">
+    <i class="bi bi-clipboard-check me-1"></i>
+    Ajouter un document
+</button>
+@endif -->
+
+    {{-- Assigner --}}
+    @if(in_array('assign', $actions))
+    <button class="btn btn-outline-success"
+            data-bs-toggle="modal"
+            data-bs-target="#assignModal">
+        <i class="bi bi-people me-1"></i>
+        Assigner
+    </button>
+    @endif
+
+    {{-- Démarrer --}}
+    @if(in_array('start', $actions))
+<button class="btn btn-outline-info"
+        data-bs-toggle="modal"
+        data-bs-target="#documentModal">
+    <i class="bi bi-play-circle me-1"></i>
+    Démarrer
+</button>
+@endif
+
+    {{-- En attente --}}
+    @if(in_array('hold', $actions))
+    <button class="btn btn-outline-dark"
+            data-bs-toggle="modal"
+            data-bs-target="#holdModal">
+        <i class="bi bi-pause-circle me-1"></i>
+        Mettre en attente
+    </button>
+    @endif
+
+    {{-- Reprendre --}}
+    @if(in_array('resume', $actions))
+    <form method="POST" action="{{ route('tickets.resume', $ticket->id) }}">
+        @csrf
+        @method('PATCH')
+        <button class="btn btn-outline-info">
+            <i class="bi bi-play-circle me-1"></i>
+            Reprendre
+        </button>
+    </form>
+    @endif
+
+    {{-- Résoudre --}}
+    @if(in_array('resolve', $actions))
+    <button class="btn btn-outline-success"
+            data-bs-toggle="modal"
+            data-bs-target="#resolveModal">
+        <i class="bi bi-check2-circle me-1"></i>
+        Résoudre
+    </button>
+    @endif
+
+    {{-- Réouvrir --}}
+    @if(in_array('reopen', $actions))
+    <button class="btn btn-outline-warning"
+            data-bs-toggle="modal"
+            data-bs-target="#reopenModal">
+        <i class="bi bi-arrow-counterclockwise me-1"></i>
+        Réouvrir
+    </button>
+    @endif
+
+    {{-- Clôturer --}}
+    @if(in_array('close', $actions))
+    <form method="POST" action="{{ route('tickets.close', $ticket->id) }}">
+        @csrf
+        @method('PATCH')
+        <button class="btn btn-outline-dark">
+            <i class="bi bi-lock me-1"></i>
+            Clôturer
+        </button>
+    </form>
+    @endif
+
+    {{-- Transférer --}}
+    @if(in_array('transfer', $actions))
+    <button class="btn btn-outline-secondary"
+            data-bs-toggle="modal"
+            data-bs-target="#transferModal">
+        <i class="bi bi-send me-1"></i>
+        Transférer
+    </button>
+    @endif
+
+    {{-- Commentaire --}}
+    @if(in_array('comment', $actions))
+    <button class="btn btn-outline-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#commentModal">
+        <i class="bi bi-chat-dots me-1"></i>
+        Commenter
+    </button>
+    @endif
+
+</div>
+            </div>
+
+        </div>
+ 
+
+    <div class="row mt-2 g-3">
+        {{-- Colonne gauche : infos ticket --}}
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 hover-shadow transition">
+                <div class="card-body p-4">
+                               
+                    <h5 class="fw-bold mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i> Détails</h5>
+                    <ul class="list-unstyled">
+                        
+                       
+<li class="mb-3"><strong>Description :</strong><br>{{ $ticket->description }}</li>
+                        
                         <li class="mb-3">
     <strong>Pièce jointe :</strong><br>
 
@@ -279,6 +218,30 @@ $statusLabels = [
                         <!-- <li class="mb-3"><strong>Prise en charge attendue le :</strong><br>{{ $ticket->response_due_at ? \Carbon\Carbon::parse($ticket->response_due_at)->format('d/m/Y H:i') : 'Non définie' }}</li> -->
                         <li><strong>Résolution attendue le :</strong><br>{{ $ticket->resolution_due_at ? \Carbon\Carbon::parse($ticket->resolution_due_at)->format('d/m/Y H:i') : 'Non définie' }}</li>
                     </ul>
+                    @php
+$total = $ticket->created_at->diffInMinutes($ticket->resolution_due_at);
+$elapsed = $ticket->created_at->diffInMinutes(now());
+
+$percent = min(100, ($elapsed / max($total,1)) * 100);
+@endphp
+
+<div class="card border-0 shadow-sm rounded-4 mt-3">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between mb-2">
+            <span>SLA</span>
+            <span>{{ round($percent) }}%</span>
+        </div>
+
+        <div class="progress" style="height:10px;">
+            <div class="progress-bar
+                {{ $percent > 90 ? 'bg-danger' : ($percent > 70 ? 'bg-warning' : 'bg-success') }}"
+                style="width:{{ $percent }}%">
+            </div>
+        </div>
+
+    </div>
+</div>
                 </div>
                 <div class="card-body p-4">
                     <!-- <h5 class="fw-bold mb-3"><i class="bi bi-hourglass-split text-warning me-2"></i> SLA</h5> -->
@@ -290,11 +253,11 @@ $statusLabels = [
                         <!-- <span>TTR (résolution)</span>
                         <span class="fw-bold">{{ $ticket->time_to_resolve ?? 'En cours' }}</span> -->
                     </div>
-                    @if($ticket->client)
+                    <!-- @if($ticket->client)
     <li><strong>Client :</strong> {{ $ticket->client->firstname }} {{ $ticket->client->name }}</li>
     <li><strong>Téléphone :</strong> {{ $ticket->client->phone }}</li>
     <li><strong>Contrat :</strong> {{ $ticket->client->contract_number ?? '—' }}</li>
-@endif
+@endif -->
                 </div>
                 
             </div>
@@ -418,7 +381,7 @@ $statusLabels = [
         @if($activity['type'] === 'hold')
         <div class="d-flex gap-3 mb-4">
             <div class="flex-shrink-0">
-                <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
                     <i class="bi bi-pause text-white"></i>
                 </div>
             </div>
@@ -429,7 +392,7 @@ $statusLabels = [
                 </small>
                 <p class="mb-1">{{ $activity['data']->message }}</p>
                 @if($activity['data']->attachment_path)
-                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-warning rounded-pill mt-1">
+                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill mt-1">
                         <i class="bi bi-paperclip me-1"></i> Voir la pièce jointe
                     </a>
                 @endif
@@ -487,7 +450,7 @@ $statusLabels = [
         @if($activity['type'] === 'start')
         <div class="d-flex gap-3 mb-4">
             <div class="flex-shrink-0">
-                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
+                <div class="bg-info rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
                     <i class="bi bi-play-circle-fill text-white"></i>
                 </div>
             </div>
@@ -554,12 +517,12 @@ $statusLabels = [
             @csrf @method('PATCH')
             <div class="modal-content rounded-4 border-0 shadow-lg">
                 <div class="modal-header bg-success text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-check2-circle me-2"></i> Résoudre le ticket</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-check2-circle me-2"></i> Rapport de résolution</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Description de la résolution</label>
+                        <label class="form-label fw-semibold">Description des tâches effectuées</label>
                         <textarea name="resolution_description" class="form-control rounded-3" rows="4" required></textarea>
                     </div>
                     <div class="mb-3">
@@ -607,7 +570,7 @@ $statusLabels = [
 
 {{-- Modal Transfert unifié --}}
 <div class="modal fade" id="transferModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog bg-secondary">
         <form method="POST" action="{{ route('tickets.transfer', $ticket->id) }}" enctype="multipart/form-data" id="transferForm">
             @csrf @method('PATCH')
             <div class="modal-content border-0 rounded-4">
@@ -720,8 +683,8 @@ $statusLabels = [
 
             <div class="modal-content">
 
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title">Mettre en attente</h5>
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white">Mettre en attente</h5>
                 </div>
 
                 <div class="modal-body">
@@ -738,7 +701,7 @@ $statusLabels = [
                 </div>
 
                 <div class="modal-footer">
-                    <button class="btn btn-warning">Valider</button>
+                    <button class="btn btn-secondary">Valider</button>
                 </div>
 
             </div>
@@ -795,12 +758,12 @@ $statusLabels = [
             @csrf
             <div class="modal-content rounded-4 border-0 shadow-lg">
                 <div class="modal-header bg-info text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-paperclip me-2"></i> Ajouter un document</h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-paperclip me-2"></i> Données d'inspection</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Nom du document</label>
+                        <label class="form-label fw-semibold">Décrivez la situation</label>
                         <input type="text" name="name" class="form-control rounded-3" required>
                     </div>
                     <div class="mb-3">
