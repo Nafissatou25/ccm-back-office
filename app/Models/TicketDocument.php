@@ -14,6 +14,7 @@ class TicketDocument extends Model
         'uploaded_by',
         'file_name',
         'file_path',
+        'description',
         'mime_type',
         'size'
     ];

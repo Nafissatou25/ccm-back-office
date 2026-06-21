@@ -19,7 +19,7 @@
             ['label' => 'En cours',   'value' => $stats['inProgress'],  'color' => 'info',     'icon' => 'mdi-progress-clock',  'status' => 'IN_PROGRESS'],
             ['label' => 'Transférés', 'value' => $stats['transferred'], 'color' => 'secondary','icon' => 'mdi-swap-horizontal', 'status' => 'TRANSFERRED'],
             ['label' => 'En attente', 'value' => $stats['onHold'],      'color' => 'dark',     'icon' => 'mdi-pause-circle',    'status' => 'ON_HOLD'],
-            ['label' => 'Réouverts',  'value' => $stats['reopened'],    'color' => 'danger',   'icon' => 'mdi-repeat',          'status' => 'REOPENED'],
+            ['label' => 'Réouverts',  'value' => $stats['reopened'],    'color' => 'orange',   'icon' => 'mdi-repeat',          'status' => 'REOPENED'],
             ['label' => 'Résolus',    'value' => $stats['resolved'],    'color' => 'success',  'icon' => 'mdi-check-circle',    'status' => 'RESOLVED'],
             ['label' => 'Clôturés',   'value' => $stats['closed'],      'color' => 'secondary','icon' => 'mdi-lock',            'status' => 'CLOSED'],
             ['label' => 'En retard',  'value' => $stats['late'],        'color' => 'danger',   'icon' => 'mdi-alarm-check',     'late'   => 1],
@@ -96,7 +96,7 @@
                                 'IN_PROGRESS' => 'info',
                                 'TRANSFERRED' => 'secondary',
                                 'ON_HOLD'     => 'dark',
-                                'REOPENED'    => 'danger',
+                                'REOPENED'    => 'orange',
                                 'RESOLVED'    => 'success',
                                 'CLOSED'      => 'secondary',
                             ];
@@ -118,6 +118,8 @@
                             // Ticket nouveau (jamais consulté) — basé sur viewed_at ou created_at < 24h sans activité
                             $isNew = $ticket->views->isEmpty();
 
+                            $isUrgent = $ticket->is_urgent === 1;
+
                         @endphp
                         <tr>
                             <td>
@@ -125,7 +127,11 @@
                                 @if($isNew)
                                     <span class="badge bg-primary ms-1" style="font-size:10px;">New</span>
                                 @endif
-                               
+                                @if($isUrgent)
+                                    <span class="badge bg-danger ms-1" style="font-size:10px;">
+                                         Urgent
+                                    </span>
+                                @endif
                             </td>
                             <td>{{ $ticket->unit->name ?? '—' }}</td>
                             <td>{{ $ticket->type->name ?? '—' }}</td>

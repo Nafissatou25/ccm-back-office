@@ -155,7 +155,7 @@ class TicketController extends Controller
         if ($role === 'supervisor' && $user->company_id != $eneoCompanyId) {
             abort(403, 'Seuls les superviseurs ENEO peuvent créer des tickets.');
         }
-
+        // dd($request->all());
         $data = $request->validate([
             'unit_id'                => 'required|exists:units,id',
             'type_id'                => 'required|exists:types,id',
@@ -213,6 +213,11 @@ class TicketController extends Controller
         // Appliquer le SLA
         SlaService::applySla($ticket);
         $ticket->save();
+//         dd([
+//     'unit_id'   => $ticket->unit_id,
+//     'type_id'   => $ticket->type_id,
+//     'is_urgent' => $ticket->is_urgent,
+// ]);
 
         // Superviseur assigné
         if ($ticket->assigned_to) {
@@ -341,7 +346,7 @@ class TicketController extends Controller
         $request->validate(['technicians' => 'required|array']);
 
         $ticket->technicians()->sync($request->technicians);
-        $ticket->update(['status' => 'IN_PROGRESS']);
+        // $ticket->update(['status' => 'IN_PROGRESS']);
 
         TicketActivity::create([
             'ticket_id' => $ticket->id,
@@ -399,7 +404,7 @@ class TicketController extends Controller
     public function hold(Request $request, Ticket $ticket)
     {
         $request->validate([
-            'reason'     => 'required|string|min:5',
+            'reason'     => 'required|string',
             'attachment' => 'nullable|file|max:5120',
         ]);
 
@@ -466,7 +471,7 @@ class TicketController extends Controller
     public function reopen(Request $request, Ticket $ticket)
     {
         $request->validate([
-            'reason'     => 'required|string|min:5',
+            'reason'     => 'required|string',
             'attachment' => 'nullable|file|max:5120',
         ]);
 

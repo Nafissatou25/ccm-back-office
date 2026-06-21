@@ -12,12 +12,12 @@ class AuthController extends Controller
 {
     // 1. Valider AVANT tout
     $request->validate([
-        'email' => 'required|email',
+        'matricule' => 'required|matricule',
         'password' => 'required'
     ]);
 
     // 2. Tentative login
-    if (!Auth::attempt($request->only('email', 'password'))) {
+    if (!Auth::attempt($request->only('matricule', 'password'))) {
         return response()->json([
             'message' => 'Identifiants invalides'
         ], 401);

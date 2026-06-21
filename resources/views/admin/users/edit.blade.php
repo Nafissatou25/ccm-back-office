@@ -12,6 +12,15 @@
         <form method="POST" action="{{ route('admin.users.update', $user) }}">
             @csrf
             @method('PUT')
+            <div class="mb-3">
+    <label class="form-label">Matricule</label>
+    <input
+        type="text"
+        name="matricule"
+        class="form-control"
+        value="{{ old('matricule', $user->matricule) }}"
+        required>
+</div>
 
             <div class="mb-3">
                 <label>Nom</label>
@@ -38,7 +47,7 @@
             </div>
 
             <div class="mb-3">
-                <label>Nouveau mot de passe (optionnel)</label>
+                <label>Nouveau mot de passe </label>
                 <input type="password" name="password" class="form-control">
             </div>
 

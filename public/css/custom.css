@@ -89,3 +89,20 @@
     padding-top: 20px;
 }
 
+.bg-orange {
+    background-color: #fd7e14 !important;
+    color: white !important;
+}
+
+.text-orange {
+    color: #fd7e14 !important;
+}
+
+.border-orange {
+    border-color: #fd7e14 !important;
+}
+
+.bg-orange {
+    background-color: #fd7e14 !important;
+    color: white !important;
+}

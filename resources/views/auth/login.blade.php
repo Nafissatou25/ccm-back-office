@@ -85,13 +85,13 @@
 
         <!-- Email -->
         <div class="mb-3">
-            <label class="form-label">Email</label>
+            <label class="form-label">Matricule</label>
             <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                <input type="email"
-                       name="email"
+                <input
+                       name="matricule"
                        class="form-control"
-                       placeholder="ex: user@mail.com"
+                       placeholder="Entrez votre mot de passe"
                        required>
             </div>
         </div>
@@ -104,7 +104,7 @@
                 <input type="password"
                        name="password"
                        class="form-control"
-                       placeholder="••••••••"
+                       placeholder="Entrez votre mot de passe"
                        required>
             </div>
         </div>

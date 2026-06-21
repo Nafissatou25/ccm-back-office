@@ -33,6 +33,7 @@ class UserController extends Controller
 {
     $data = $request->validate([
         'name' => 'required|string',
+        'matricule' => 'required|string|unique:users,matricule',
         'email' => 'required|email|unique:users,email',
         'password' => 'required',
 
@@ -58,13 +59,20 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $request->validate([
+    'name' => 'required',
+    'matricule' => 'required|unique:users,matricule,' . $user->id,
+    'email' => 'nullable|email|unique:users,email,' . $user->id,
+]);
         $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'role_id' => $request->role_id,
-            'companies' => Company::all()
-        ]);
-
+    'name' => $request->name,
+    'matricule' => $request->matricule,
+    'email' => $request->email,
+    'role_id' => $request->role_id,
+    'agency_id' => $request->agency_id,
+    'unit_id' => $request->unit_id,
+    'company_id' => $request->company_id,
+]);
         return redirect()->route('admin.users.index');
     }
 

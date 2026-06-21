@@ -23,7 +23,7 @@ class AuthController extends Controller
     public function login(Request $request)
 {
     $credentials = $request->validate([
-        'email'    => 'required|email',
+        'matricule'    => 'required|string',
         'password' => 'required'
     ]);
 
@@ -31,7 +31,7 @@ class AuthController extends Controller
     if ($request->expectsJson() || $request->is('api/*')) {
         if (!Auth::attempt($credentials)) {
             return response()->json([
-                'message' => 'Email ou mot de passe incorrect'
+                'message' => 'Matricule ou mot de passe incorrect'
             ], 401);
         }
 
@@ -56,7 +56,7 @@ class AuthController extends Controller
     }
 
     return back()->withErrors([
-        'email' => 'Email ou mot de passe incorrect'
+        'matricule' => 'Matricule ou mot de passe incorrect'
     ]);
 }
 

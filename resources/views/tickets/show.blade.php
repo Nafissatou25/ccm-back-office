@@ -21,14 +21,18 @@
     </a> -->
                 <h1 class="display-6 fw-bold mb-0">
                     Ticket #{{ $ticket->id }}
-
+@if($ticket->is_urgent == 1)
+        <span class="badge bg-danger ms-2">
+             Urgent
+        </span>
+    @endif
     @php
         $statusColors = [
     'OPEN' => 'warning',
     'IN_PROGRESS' => 'info',
     'TRANSFERRED' => 'secondary',
     'ON_HOLD' => 'dark',
-    'REOPENED' => 'danger',
+    'REOPENED' => 'orange',
     'RESOLVED' => 'success',
     'CLOSED' => 'secondary',
     'ASSIGNED_TO_TECHNICIANS' => 'info',
@@ -57,9 +61,7 @@ $statusLabels = [
 ];
     @endphp
 
-    <span class="badge bg-{{ $statusColors[$ticket->status] ?? 'secondary' }}">
-        {{ $statusLabels[$ticket->status] ?? $ticket->status }}
-    </span>
+    
                     <!-- <button class="btn btn-outline-secondary btn-sm ms-2" onclick="navigator.clipboard.writeText('{{ $ticket->id }}')" title="Copier l'ID">
                         <i class="bi bi-clipboard"></i>
                     </button> -->
@@ -188,7 +190,9 @@ $statusLabels = [
                                
                     <h5 class="fw-bold mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i> Détails</h5>
                     <ul class="list-unstyled">
-                        
+                        <li class="mb-3"><span class="badge bg-{{ $statusColors[$ticket->status] ?? 'secondary' }}">
+        {{ $statusLabels[$ticket->status] ?? $ticket->status }}
+    </span></li>
                        
 <li class="mb-3"><strong>Description :</strong><br>{{ $ticket->description }}</li>
                         
@@ -357,25 +361,36 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
         </div>
         @endif
 
-        {{-- DOCUMENT --}}
         @if($activity['type'] === 'document')
-        <div class="d-flex gap-3 mb-4">
-            <div class="flex-shrink-0">
-                <div class="bg-info rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                    <i class="bi bi-file-earmark-text text-white"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                <small class="text-muted d-block mb-1">
-                    {{ $activity['data']->uploader->name }}
-                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
-                </small>
-                <a href="{{ asset('storage/'.$activity['data']->file_path) }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill">
-                    <i class="bi bi-download me-1"></i> {{ $activity['data']->file_name }}
-                </a>
-            </div>
+<div class="d-flex gap-3 mb-4">
+    <div class="flex-shrink-0">
+        <div class="bg-info rounded-circle d-flex align-items-center justify-content-center"
+             style="width:42px;height:42px;">
+            <i class="bi bi-search text-white"></i>
         </div>
-        @endif
+    </div>
+
+    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+        <small class="text-muted d-block mb-1">
+            {{ $activity['data']->uploader->name ?? 'Utilisateur' }}
+            <span class="float-end">
+                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
+            </span>
+        </small>
+
+         <p class="mb-2">
+            {{ $activity['data']->description ?? $activity['data']->file_name }}
+        </p>
+
+        <a href="{{ asset('storage/'.$activity['data']->file_path) }}"
+           target="_blank"
+           class="btn btn-sm btn-outline-dark rounded-pill">
+            <i class="bi bi-download me-1"></i>
+            Pièce jointe
+        </a>
+    </div>
+</div>
+@endif
 
         {{-- MISE EN ATTENTE --}}
         @if($activity['type'] === 'hold')

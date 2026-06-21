@@ -69,6 +69,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
+    // Assignation techniciens (SUPERVISOR uniquement)
+    Route::put('/tickets/{ticket}/assign-technicians', [TicketController::class, 'assignTechnicians'])
+        ->middleware('role:SUPERVISOR,MANAGER,ADMIN');
+
     /*
     | Tickets
     */

@@ -11,7 +11,8 @@ class TicketDocumentController extends Controller
     {
         $request->validate([
             'name' => 'required|string',
-            'document' => 'required|file|max:4096'
+            'document' => 'required|file|max:4096',
+            'description' => 'nullable|string|max:255',
         ]);
 
         $path = $request->file('document')
@@ -20,7 +21,9 @@ class TicketDocumentController extends Controller
         $ticket->documents()->create([
             'file_name' => $request->name,
             'file_path' => $path,
-            'uploaded_by' => auth()->id()
+            'description' => $request->description,
+            'uploaded_by' => auth()->id(),
+            'message'         => $request->description ?? $request->file('file')->getClientOriginalName(),
         ]);
         return back()->with(
             'success',

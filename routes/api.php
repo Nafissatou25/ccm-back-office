@@ -82,6 +82,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/tickets/{ticket}/assign-technicians', [TicketController::class, 'assignTechnicians'])
         ->middleware('role:SUPERVISOR,MANAGER,ADMIN');
 
+    Route::get('/tickets/{ticket}/technicians', [TicketController::class, 'getTechnicians']);
+
     // Démarrage (TECHNICIAN)
     Route::patch('/tickets/{ticket}/start',   [TicketController::class, 'start']);
 

@@ -13,6 +13,7 @@ class Ticket extends Model
     'assigned_to',
     'description',
     'priority',
+    'is_urgent',
     'status',
     'contract_number',
     'attachment_path',
@@ -22,9 +23,11 @@ class Ticket extends Model
     'total_pause_duration',
     'is_sla_breached',
     'resolution_due_at',
+    'response_due_at',
     'client_id',
     'company_id',
     'created_by'
+
 ];
 
 protected $casts = [
@@ -146,4 +149,12 @@ public function checkSla()
     return $this->hasMany(TicketView::class);
 }
 
+protected $appends = ['is_new'];
+
+public function getIsNewAttribute()
+{
+    return !$this->views()
+        ->where('user_id', auth()->id())
+        ->exists();
+}
 }

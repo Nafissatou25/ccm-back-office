@@ -9,8 +9,12 @@ use App\Models\Ticket;
 use App\Models\TicketActivity;
 use App\Models\Type;
 use App\Models\Unit;
+use App\Models\Client;
 use App\Models\User;
+use App\Models\Company;
 use App\Services\TicketActionService;
+use App\Services\SlaService;
+use App\Models\TicketView;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Services\TicketNotificationService;
@@ -26,13 +30,16 @@ class TicketController extends Controller
         $user->load('role');
         $role = strtoupper($user->role?->name);
 
-        $query = Ticket::with(['type', 'unit']);
+        $query = Ticket::with(['type', 'unit', 'client',]);
 
         // Mêmes règles que le web
         if (in_array($role, ['ADMIN', 'MANAGER', 'CUSTOMER_SERVICE'])) {
             // accès complet
         } elseif ($role === 'SUPERVISOR') {
-            $query->where('assigned_to', $user->id);
+            $query->where(function ($q) use ($user) {
+    $q->where('assigned_to', $user->id)
+      ->orWhereHas('supervisors', fn($sq) => $sq->where('user_id', $user->id));
+});
         } elseif ($role === 'TECHNICIAN') {
             $query->whereHas('technicians', fn($q) => $q->where('users.id', $user->id));
         } else {
@@ -57,27 +64,57 @@ class TicketController extends Controller
         $user = auth()->user();
         $role = strtolower($user->role?->name ?? '');
 
-        if (!in_array($role, ['manager', 'customer_service', 'supervisor'])) {
-            return response()->json(['message' => 'Accès interdit'], 403);
+        if (!in_array($role, ['manager', 'customer_service', 'supervisor', 'admin'])) {
+            abort(403, 'Accès interdit');
+        }
+
+        $eneoCompanyId = Company::where('name', 'ENEO')->first()?->id;
+        if ($role === 'supervisor' && $user->company_id != $eneoCompanyId) {
+            abort(403, 'Seuls les superviseurs ENEO peuvent créer des tickets.');
         }
 
         $data = $request->validate([
-            'unit_id'         => 'required|exists:units,id',
-            'type_id'         => 'required|exists:types,id',
-            'agency_id'       => 'required|exists:agencies,id',
-            'assigned_to'     => 'nullable|exists:users,id',
-            'description'     => 'required|string',
-            'priority'        => 'required|in:LOW,MEDIUM,HIGH,CRITICAL',
-            'contract_number' => 'nullable|string',
-            'attachment_path' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
-        ]);
+    'unit_id'                => 'required|exists:units,id',
+    'type_id'                => 'required|exists:types,id',
+    'agency_id'              => 'required|exists:agencies,id',
+    'assigned_to'            => 'nullable|exists:users,id',
+
+    'description'            => 'required|string',
+    'is_urgent'              => 'nullable|boolean',
+
+    'attachment_path'        => 'required|file',
+
+    'client_contract_number' => 'nullable|string|max:50',
+    'client_name'            => 'required|string|max:255',
+    'client_firstname'       => 'nullable|string|max:255',
+    'client_phone'           => 'required|string|max:20',
+    'client_whatsapp'        => 'nullable|string|max:20',
+    'client_delivery_point'  => 'nullable|string',
+]);
+        $isUrgent = $request->boolean('is_urgent');
 
         if ($request->hasFile('attachment_path')) {
             $data['attachment_path'] = $request->file('attachment_path')->store('tickets', 'public');
         }
 
-        $sla = Sla::where('priority', $data['priority'])->where('is_active', 1)->first();
-        $resolutionDeadline = $sla ? Carbon::now()->addMinutes($sla->resolution_time) : null;
+$client = Client::where(
+    'contract_number',
+    $data['client_contract_number']
+)->orWhere(
+    'phone',
+    $data['client_phone']
+)->first();
+
+if (!$client) {
+    $client = Client::create([
+        'contract_number' => $data['client_contract_number'] ?? null,
+        'name'            => $data['client_name'],
+        'firstname'       => $data['client_firstname'] ?? null,
+        'phone'           => $data['client_phone'],
+        'whatsapp'        => $data['client_whatsapp'] ?? null,
+        'delivery_point'  => $data['client_delivery_point'] ?? null,
+    ]);
+}
 
         $ticket = Ticket::create([
             'unit_id'             => $data['unit_id'],
@@ -85,26 +122,38 @@ class TicketController extends Controller
             'agency_id'           => $data['agency_id'],
             'assigned_to'         => $data['assigned_to'] ?? null,
             'description'         => $data['description'],
-            'priority'            => $data['priority'],
+            'is_urgent'           => $isUrgent,
             'contract_number'     => $data['contract_number'] ?? null,
             'attachment_path'     => $data['attachment_path'] ?? null,
             'status'              => 'OPEN',
-            'sla_id'              => $sla?->id,
-            'resolution_deadline' => $resolutionDeadline,
+            // 'sla_id'              => $sla?->id,
+            // 'resolution_deadline' => $resolutionDeadline,
             'created_by'          => $user->id,
+            'client_id' => $client->id
         ]);
+        SlaService::applySla($ticket);
+$ticket->save();
 
         return response()->json(['message' => 'Ticket créé avec succès', 'ticket' => $ticket], 201);
     }
+
 
     // =========================================================
     // SHOW
     // =========================================================
     public function show(Ticket $ticket)
     {
-        $ticket->load(['type', 'unit', 'agency', 'technicians', 'comments.user', 'documents.uploader', 'activities']);
+        $ticket->load(['client', 'type', 'unit', 'agency', 'technicians', 'comments.user', 'documents.uploader', 'activities']);
         $actions = TicketActionService::allowedActions($ticket, auth()->user());
-
+        TicketView::firstOrCreate(
+    [
+        'ticket_id' => $ticket->id,
+        'user_id' => auth()->id(),
+    ],
+    [
+        'viewed_at' => now(),
+    ]
+);
         return response()->json([
             'ticket'  => $ticket,
             'actions' => $actions,
@@ -129,7 +178,7 @@ class TicketController extends Controller
         }
 
         $ticket->technicians()->sync($request->technicians);
-        $ticket->update(['status' => 'ASSIGNED_TO_TECHNICIANS']);
+        // $ticket->update(['status' => 'IN_PROGRESS']);
         app(TicketNotificationService::class)->notifyAssigned($ticket);
 
 
@@ -169,6 +218,30 @@ class TicketController extends Controller
         'message' => 'Ticket en cours de traitement',
         'ticket' => $ticket->fresh()
     ]);
+}
+
+public function getTechnicians(Ticket $ticket)
+{
+    $user = auth()->user();
+    $role = strtoupper($user->role?->name);
+    $eneoCompanyId = Company::where('name', 'ENEO')->first()?->id;
+
+    // Superviseur entreprise externe → ses propres techniciens
+    if ($role === 'SUPERVISOR' && $user->company_id != $eneoCompanyId) {
+        $technicians = User::whereHas('role', fn($q) => $q->where('name', 'TECHNICIAN'))
+            ->where('company_id', $user->company_id)
+            ->orderBy('name')
+            ->get();
+    } else {
+        // Superviseur ENEO / Manager / Admin → techniciens de l'unité + agence du ticket
+        $technicians = User::whereHas('role', fn($q) => $q->where('name', 'TECHNICIAN'))
+            ->where('unit_id', $ticket->unit_id)
+            ->where('agency_id', $ticket->agency_id)
+            ->orderBy('name')
+            ->get();
+    }
+
+    return response()->json($technicians);
 }
 
     // =========================================================
@@ -214,7 +287,7 @@ class TicketController extends Controller
         'attachment_path' => $attachmentPath,
     ]);
 
-    app(TicketNotificationService::class)->notifyResolved($ticket);
+    // app(TicketNotificationService::class)->notifyResolved($ticket);
 
     return response()->json([
         'message' => 'Ticket résolu avec succès',
@@ -335,32 +408,81 @@ class TicketController extends Controller
     // =========================================================
     public function transfer(Request $request, Ticket $ticket)
     {
-        $role = strtoupper(auth()->user()->role?->name);
 
-        if ($role === 'TECHNICIAN') {
-            return response()->json(['message' => 'Action non autorisée'], 403);
+        if (strtoupper(auth()->user()->role?->name) === 'TECHNICIAN') {
+            abort(403);
         }
 
-        $request->validate(['user_id' => 'required|exists:users,id']);
+       $request->validate([
+    'target_type' => 'required|in:user,company',
 
-        $isSupervisor = User::where('id', $request->user_id)
-            ->whereHas('role', fn($q) => $q->where('name', 'SUPERVISOR'))
-            ->exists();
+    'user_id' => [
+        Rule::requiredIf($request->target_type === 'user'),
+        'exists:users,id'
+    ],
 
-        if (!$isSupervisor) {
-            return response()->json(['message' => 'Vous ne pouvez transférer qu\'à un superviseur'], 403);
+    'company_id' => [
+        'nullable',
+        Rule::requiredIf($request->target_type === 'company'),
+        'exists:companies,id'
+    ],
+    
+
+    'reason' => 'required|string|max:500',
+]);
+
+        $oldSupervisor = $ticket->assigned_to ? User::find($ticket->assigned_to) : null;
+
+        if ($request->target_type === 'user') {
+            $supervisor = User::findOrFail($request->user_id);
+           
+            if (
+    !$supervisor->role ||
+    strtoupper($supervisor->role->name) !== 'SUPERVISOR'
+) {
+    return back()->withErrors([
+        'user_id' => 'La cible doit être un superviseur'
+    ]);
+}
+
+            if ($oldSupervisor) $ticket->addSupervisor($oldSupervisor);
+           
+            $ticket->update(['assigned_to' => $supervisor->id, 'company_id' => null, 'status' => 'TRANSFERRED',  'unit_id'     => $supervisor->unit_id,]);
+            $ticket->addSupervisor($supervisor);
+
+            TicketActivity::create([
+                'ticket_id' => $ticket->id,
+                'user_id'   => auth()->id(),
+                'type'      => 'transfer',
+                'message'   => "Ticket transféré à {$supervisor->name}",
+            ]);
+        } else {
+            $company    = Company::findOrFail($request->company_id);
+            $supervisor = User::findOrFail($request->user_id);
+
+            if ($supervisor->company_id != $company->id) {
+                return back()->withErrors(['user_id' => 'Cet utilisateur n\'appartient pas à cette entreprise.']);
+            }
+
+            if ($oldSupervisor) $ticket->addSupervisor($oldSupervisor);
+
+            $path1 = $request->file('attachment1')->store('transfers', 'public');
+            $path2 = $request->file('attachment2')->store('transfers', 'public');
+
+            $ticket->update(['assigned_to' => $supervisor->id, 'company_id' => $company->id, 'status' => 'TRANSFERRED',]);
+            $ticket->addSupervisor($supervisor);
+
+            TicketActivity::create([
+                'ticket_id'        => $ticket->id,
+                'user_id'          => auth()->id(),
+                'type'             => 'transfer',
+                'message'          => "Ticket transféré à {$company->name} (responsable : {$supervisor->name})",
+                'attachment_path'  => $path1,
+                'attachment2_path' => $path2,
+            ]);
         }
 
-        $ticket->update(['assigned_to' => $request->user_id, 'status' => 'TRANSFERRED']);
-
-        TicketActivity::create([
-            'ticket_id' => $ticket->id,
-            'user_id'   => auth()->id(),
-            'type'      => 'transfer',
-            'message'   => 'Ticket transféré',
-        ]);
-
-        return response()->json(['message' => 'Ticket transféré', 'ticket' => $ticket]);
+        return back()->with('success', 'Ticket transféré avec succès');
     }
 
     // =========================================================
