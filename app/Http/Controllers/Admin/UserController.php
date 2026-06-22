@@ -51,11 +51,15 @@ class UserController extends Controller
         ->with('success', 'Utilisateur créé');
 }
 
-    public function edit(User $user)
-    {
-        $roles = Role::all();
-        return view('admin.users.edit', compact('user', 'roles'));
-    }
+   public function edit(User $user)
+{
+    $roles = Role::all();
+    $agencies = Agency::orderBy('name')->get();
+    $units = Unit::orderBy('name')->get();
+    $companies = Company::orderBy('name')->get();
+
+    return view('admin.users.edit', compact('user', 'roles', 'agencies', 'units', 'companies'));
+}
 
     public function update(Request $request, User $user)
     {

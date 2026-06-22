@@ -4,519 +4,326 @@
 
 @section('content')
 <div class="container-fluid px-0">
-    {{-- En-tête et actions --}}
-    <div class="px-3 px-lg-4">   {{-- seulement ici pour le padding --}}
+    {{-- En-tête --}}
+    <div class="px-3 px-lg-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-
-    <!-- {{-- En-tête avec statut et actions rapides --}}
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-        <div>
-            <div class="d-flex align-items-center gap-3 flex-wrap"> -->
-                {{-- Bouton retour --}}
-    <!-- <a href="{{ route('tickets.index') }}"
-       class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center"
-       style="width: 38px; height: 38px;"
-       title="Retour">
-        <i class="bi bi-chevron-left fs-3"></i>
-    </a> -->
-                <h1 class="display-6 fw-bold mb-0">
-                    Ticket #{{ $ticket->id }}
-@if($ticket->is_urgent == 1)
-        <span class="badge bg-danger ms-2">
-             Urgent
-        </span>
-    @endif
-    @php
-        $statusColors = [
-    'OPEN' => 'warning',
-    'IN_PROGRESS' => 'info',
-    'TRANSFERRED' => 'secondary',
-    'ON_HOLD' => 'dark',
-    'REOPENED' => 'orange',
-    'RESOLVED' => 'success',
-    'CLOSED' => 'secondary',
-    'ASSIGNED_TO_TECHNICIANS' => 'info',
-];
-
-$statusLabels = [
-    'OPEN' => 'Ouvert',
-    'ASSIGNED_TO_TECHNICIANS' => 'Assigné',
-    'IN_PROGRESS' => 'En cours',
-    'ON_HOLD' => 'En attente',
-    'RESOLVED' => 'Résolu',
-    'CLOSED' => 'Clôturé',
-    'REOPENED' => 'Réouvert',
-    'TRANSFERRED' => 'Transféré'
-];
-
-        $statusLabels = [
-    'OPEN' => 'Ouvert',
-    'ASSIGNED_TO_TECHNICIANS' => 'Assigné',
-    'IN_PROGRESS' => 'En cours',
-    'ON_HOLD' => 'En attente',
-    'RESOLVED' => 'Résolu',
-    'CLOSED' => 'Clôturé',
-    'REOPENED' => 'Réouvert',
-    'TRANSFERRED' => 'Transféré'
-];
-    @endphp
-
-    
-                    <!-- <button class="btn btn-outline-secondary btn-sm ms-2" onclick="navigator.clipboard.writeText('{{ $ticket->id }}')" title="Copier l'ID">
-                        <i class="bi bi-clipboard"></i>
-                    </button> -->
-                     <p class="text-muted mt-2 mb-0">
-                Créé le {{ $ticket->created_at->format('d/m/Y à H:i') }} par <strong>{{ $ticket->user?->name ?? 'Utilisateur inconnu' }}</strong>
-            </p>
-                </h1>
-                <div class="d-flex justify-content-between align-items-center">
-
-    <div class="d-flex flex-wrap gap-2 mt-3">
-
-    <!-- @if(in_array('document', $actions))
-<button class="btn btn-outline-info"
-        data-bs-toggle="modal"
-        data-bs-target="#documentModal">
-    <i class="bi bi-clipboard-check me-1"></i>
-    Ajouter un document
-</button>
-@endif -->
-
-    {{-- Assigner --}}
-    @if(in_array('assign', $actions))
-    <button class="btn btn-outline-success"
-            data-bs-toggle="modal"
-            data-bs-target="#assignModal">
-        <i class="bi bi-people me-1"></i>
-        Assigner
-    </button>
-    @endif
-
-    {{-- Démarrer --}}
-    @if(in_array('start', $actions))
-<button class="btn btn-outline-info"
-        data-bs-toggle="modal"
-        data-bs-target="#documentModal">
-    <i class="bi bi-play-circle me-1"></i>
-    Démarrer
-</button>
-@endif
-
-    {{-- En attente --}}
-    @if(in_array('hold', $actions))
-    <button class="btn btn-outline-dark"
-            data-bs-toggle="modal"
-            data-bs-target="#holdModal">
-        <i class="bi bi-pause-circle me-1"></i>
-        Mettre en attente
-    </button>
-    @endif
-
-    {{-- Reprendre --}}
-    @if(in_array('resume', $actions))
-    <form method="POST" action="{{ route('tickets.resume', $ticket->id) }}">
-        @csrf
-        @method('PATCH')
-        <button class="btn btn-outline-info">
-            <i class="bi bi-play-circle me-1"></i>
-            Reprendre
-        </button>
-    </form>
-    @endif
-
-    {{-- Résoudre --}}
-    @if(in_array('resolve', $actions))
-    <button class="btn btn-outline-success"
-            data-bs-toggle="modal"
-            data-bs-target="#resolveModal">
-        <i class="bi bi-check2-circle me-1"></i>
-        Résoudre
-    </button>
-    @endif
-
-    {{-- Réouvrir --}}
-    @if(in_array('reopen', $actions))
-    <button class="btn btn-outline-warning"
-            data-bs-toggle="modal"
-            data-bs-target="#reopenModal">
-        <i class="bi bi-arrow-counterclockwise me-1"></i>
-        Réouvrir
-    </button>
-    @endif
-
-    {{-- Clôturer --}}
-    @if(in_array('close', $actions))
-    <form method="POST" action="{{ route('tickets.close', $ticket->id) }}">
-        @csrf
-        @method('PATCH')
-        <button class="btn btn-outline-dark">
-            <i class="bi bi-lock me-1"></i>
-            Clôturer
-        </button>
-    </form>
-    @endif
-
-    {{-- Transférer --}}
-    @if(in_array('transfer', $actions))
-    <button class="btn btn-outline-secondary"
-            data-bs-toggle="modal"
-            data-bs-target="#transferModal">
-        <i class="bi bi-send me-1"></i>
-        Transférer
-    </button>
-    @endif
-
-    {{-- Commentaire --}}
-    @if(in_array('comment', $actions))
-    <button class="btn btn-outline-primary"
-            data-bs-toggle="modal"
-            data-bs-target="#commentModal">
-        <i class="bi bi-chat-dots me-1"></i>
-        Commenter
-    </button>
-    @endif
-
-</div>
-            </div>
-
-        </div>
- 
-
-    <div class="row mt-2 g-3">
-        {{-- Colonne gauche : infos ticket --}}
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 hover-shadow transition">
-                <div class="card-body p-4">
-                               
-                    <h5 class="fw-bold mb-3"><i class="bi bi-info-circle-fill text-primary me-2"></i> Détails</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-3"><span class="badge bg-{{ $statusColors[$ticket->status] ?? 'secondary' }}">
-        {{ $statusLabels[$ticket->status] ?? $ticket->status }}
-    </span></li>
-                       
-<li class="mb-3"><strong>Description :</strong><br>{{ $ticket->description }}</li>
-                        
-                        <li class="mb-3">
-    <strong>Pièce jointe :</strong><br>
-
-    @if($ticket->attachment_path)
-        <a href="{{ asset('storage/'.$ticket->attachment_path) }}"
-           target="_blank"
-           class="btn btn-sm btn-outline-primary rounded-pill mt-2">
-
-            <i class="bi bi-paperclip me-1"></i>
-            Voir le fichier
-        </a>
-    @else
-        <span class="text-muted">Aucune pièce jointe</span>
-    @endif
-</li>
-                       <li class="mb-3">
-    <strong>Assigné à :</strong><br>
-    @if($ticket->technicians->count())
-        {{ $ticket->technicians->pluck('name')->implode(', ') }}
-    @else
-        <span class="text-muted">Non assigné</span>
-    @endif
-</li>
-                        <!-- <li class="mb-3"><strong>Prise en charge attendue le :</strong><br>{{ $ticket->response_due_at ? \Carbon\Carbon::parse($ticket->response_due_at)->format('d/m/Y H:i') : 'Non définie' }}</li> -->
-                        <li><strong>Résolution attendue le :</strong><br>{{ $ticket->resolution_due_at ? \Carbon\Carbon::parse($ticket->resolution_due_at)->format('d/m/Y H:i') : 'Non définie' }}</li>
-                    </ul>
-                    @php
-$total = $ticket->created_at->diffInMinutes($ticket->resolution_due_at);
-$elapsed = $ticket->created_at->diffInMinutes(now());
-
-$percent = min(100, ($elapsed / max($total,1)) * 100);
-@endphp
-
-<div class="card border-0 shadow-sm rounded-4 mt-3">
-    <div class="card-body">
-
-        <div class="d-flex justify-content-between mb-2">
-            <span>SLA</span>
-            <span>{{ round($percent) }}%</span>
-        </div>
-
-        <div class="progress" style="height:10px;">
-            <div class="progress-bar
-                {{ $percent > 90 ? 'bg-danger' : ($percent > 70 ? 'bg-warning' : 'bg-success') }}"
-                style="width:{{ $percent }}%">
-            </div>
-        </div>
-
-    </div>
-</div>
+            <div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h1 class="display-6 fw-bold mb-0">
+                        <i class="mdi mdi-ticket me-2 text-primary"></i>
+                        Ticket #{{ $ticket->id }}
+                        @if($ticket->is_urgent == 1)
+                            <span class="badge bg-danger-subtle text-danger ms-2 px-3 py-2 rounded-pill">
+                                <i class="mdi mdi-alert me-1"></i> Urgent
+                            </span>
+                        @endif
+                        @php
+                            $statusColors = [
+                                'OPEN' => 'warning',
+                                'IN_PROGRESS' => 'info',
+                                'TRANSFERRED' => 'secondary',
+                                'ON_HOLD' => 'dark',
+                                'REOPENED' => 'orange',
+                                'RESOLVED' => 'success',
+                                'CLOSED' => 'secondary',
+                                'ASSIGNED_TO_TECHNICIANS' => 'info',
+                            ];
+                            $statusLabels = [
+                                'OPEN' => 'Ouvert',
+                                'ASSIGNED_TO_TECHNICIANS' => 'Assigné',
+                                'IN_PROGRESS' => 'En cours',
+                                'ON_HOLD' => 'En attente',
+                                'RESOLVED' => 'Résolu',
+                                'CLOSED' => 'Clôturé',
+                                'REOPENED' => 'Réouvert',
+                                'TRANSFERRED' => 'Transféré'
+                            ];
+                            $statusColor = $statusColors[$ticket->status] ?? 'secondary';
+                        @endphp
+                        <!-- <span class="badge bg-{{ $statusColor }}-subtle text-{{ $statusColor }} px-3 py-2 rounded-pill ms-2">
+                            {{ $statusLabels[$ticket->status] ?? $ticket->status }}
+                        </span> -->
+                    </h1>
                 </div>
-                <div class="card-body p-4">
-                    <!-- <h5 class="fw-bold mb-3"><i class="bi bi-hourglass-split text-warning me-2"></i> SLA</h5> -->
-                    <div class="d-flex justify-content-between">
-                        <!-- <span>TTO (prise en charge)</span>
-                        <span class="fw-bold">{{ $ticket->time_to_own ?? 'En attente' }}</span> -->
-                    </div>
-                    <div class="d-flex justify-content-between mt-2">
-                        <!-- <span>TTR (résolution)</span>
-                        <span class="fw-bold">{{ $ticket->time_to_resolve ?? 'En cours' }}</span> -->
-                    </div>
-                    <!-- @if($ticket->client)
-    <li><strong>Client :</strong> {{ $ticket->client->firstname }} {{ $ticket->client->name }}</li>
-    <li><strong>Téléphone :</strong> {{ $ticket->client->phone }}</li>
-    <li><strong>Contrat :</strong> {{ $ticket->client->contract_number ?? '—' }}</li>
-@endif -->
-                </div>
-                
+                <p class="text-muted mt-2 mb-0">
+                    <i class="mdi mdi-calendar-clock me-1"></i>
+                    Créé le {{ $ticket->created_at->format('d/m/Y à H:i') }}
+                    par <strong>{{ $ticket->user?->name ?? 'Utilisateur inconnu' }}</strong>
+                </p>
             </div>
-            
 
-            {{-- Carte SLA / chrono --}}
-            <!-- <div class="card border-0 shadow-sm rounded-4 mt-4 bg-light">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3"><i class="bi bi-hourglass-split text-warning me-2"></i> SLA</h5>
-                    <div class="d-flex justify-content-between">
-                        <span>TTO (prise en charge)</span>
-                        <span class="fw-bold">{{ $ticket->time_to_own ?? 'En attente' }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mt-2">
-                        <span>TTR (résolution)</span>
-                        <span class="fw-bold">{{ $ticket->time_to_resolve ?? 'En cours' }}</span>
+            {{-- Actions rapides --}}
+            <div class="d-flex flex-wrap gap-2 mt-3 mt-lg-0">
+                @if(in_array('assign', $actions))
+                <button class="btn btn-outline-success rounded-pill btn-sm px-3"
+                        data-bs-toggle="modal" data-bs-target="#assignModal">
+                    <i class="mdi mdi-account-plus me-1"></i> Assigner
+                </button>
+                @endif
+
+                @if(in_array('start', $actions))
+                <button class="btn btn-outline-info rounded-pill btn-sm px-3"
+                        data-bs-toggle="modal" data-bs-target="#documentModal">
+                    <i class="mdi mdi-play-circle me-1"></i> Démarrer
+                </button>
+                @endif
+
+                @if(in_array('hold', $actions))
+                <button class="btn btn-outline-dark rounded-pill btn-sm px-3"
+                        data-bs-toggle="modal" data-bs-target="#holdModal">
+                    <i class="mdi mdi-pause-circle me-1"></i> En attente
+                </button>
+                @endif
+
+                @if(in_array('resume', $actions))
+                <form method="POST" action="{{ route('tickets.resume', $ticket->id) }}" class="d-inline">
+                    @csrf @method('PATCH')
+                    <button class="btn btn-outline-info rounded-pill btn-sm px-3">
+                        <i class="mdi mdi-play-circle me-1"></i> Reprendre
+                    </button>
+                </form>
+                @endif
+
+                @if(in_array('resolve', $actions))
+                <button class="btn btn-outline-success rounded-pill btn-sm px-3"
+                        data-bs-toggle="modal" data-bs-target="#resolveModal">
+                    <i class="mdi mdi-check-circle me-1"></i> Résoudre
+                </button>
+                @endif
+
+                @if(in_array('reopen', $actions))
+                <button class="btn btn-outline-warning rounded-pill btn-sm px-3"
+                        data-bs-toggle="modal" data-bs-target="#reopenModal">
+                    <i class="mdi mdi-refresh me-1"></i> Réouvrir
+                </button>
+                @endif
+
+                @if(in_array('close', $actions))
+                <form method="POST" action="{{ route('tickets.close', $ticket->id) }}" class="d-inline">
+                    @csrf @method('PATCH')
+                    <button class="btn btn-outline-dark rounded-pill btn-sm px-3">
+                        <i class="mdi mdi-lock me-1"></i> Clôturer
+                    </button>
+                </form>
+                @endif
+
+                @if(in_array('transfer', $actions))
+                <button class="btn btn-outline-secondary rounded-pill btn-sm px-3"
+                        data-bs-toggle="modal" data-bs-target="#transferModal">
+                    <i class="mdi mdi-send me-1"></i> Transférer
+                </button>
+                @endif
+
+                @if(in_array('comment', $actions))
+                <button class="btn btn-outline-primary rounded-pill btn-sm px-3"
+                        data-bs-toggle="modal" data-bs-target="#commentModal">
+                    <i class="mdi mdi-chat me-1"></i> Commenter
+                </button>
+                @endif
+            </div>
+        </div>
+
+        {{-- Contenu principal --}}
+        <div class="row g-3">
+            {{-- Colonne gauche : infos ticket --}}
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="mdi mdi-information text-primary me-2"></i> Détails
+                        </h5>
+
+                        <ul class="list-unstyled">
+                            <li class="mb-3">
+                                <strong>Statut</strong><br>
+                                <span class="badge bg-{{ $statusColor }}-subtle text-{{ $statusColor }} px-3 py-2 rounded-pill">
+                                    {{ $statusLabels[$ticket->status] ?? $ticket->status }}
+                                </span>
+                            </li>
+
+                            <li class="mb-3">
+                                <strong>Description</strong><br>
+                                <span class="text-muted">{{ $ticket->description }}</span>
+                            </li>
+
+                            <li class="mb-3">
+                                <strong>Pièce jointe</strong><br>
+                                @if($ticket->attachment_path)
+                                    <a href="{{ asset('storage/'.$ticket->attachment_path) }}"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-primary rounded-pill mt-1">
+                                        <i class="mdi mdi-paperclip me-1"></i> Voir le fichier
+                                    </a>
+                                @else
+                                    <span class="text-muted">Aucune pièce jointe</span>
+                                @endif
+                            </li>
+
+                            <li class="mb-3">
+                                <strong>Assigné à</strong><br>
+                                @if($ticket->technicians->count())
+                                    {{ $ticket->technicians->pluck('name')->implode(', ') }}
+                                @else
+                                    <span class="text-muted">Non assigné</span>
+                                @endif
+                            </li>
+
+                            <li class="mb-3">
+                                <strong>Résolution attendue le</strong><br>
+                                @if($ticket->resolution_due_at)
+                                    @php
+                                        $isLate = $ticket->resolution_due_at && now()->greaterThan($ticket->resolution_due_at) && !in_array($ticket->status, ['RESOLVED', 'CLOSED']);
+                                    @endphp
+                                    <span class="{{ $isLate ? 'text-danger fw-bold' : '' }}">
+                                        {{ $ticket->resolution_due_at->format('d/m/Y H:i') }}
+                                        @if($isLate)
+                                            <i class="mdi mdi-alarm text-danger ms-1"></i>
+                                        @endif
+                                    </span>
+                                @else
+                                    <span class="text-muted">Non définie</span>
+                                @endif
+                            </li>
+
+                            @if($ticket->client)
+                            <li class="mb-3">
+                                <strong>Client</strong><br>
+                                {{ $ticket->client->firstname }} {{ $ticket->client->name }}
+                            </li>
+                            <li class="mb-3">
+                                <strong>Téléphone</strong><br>
+                                {{ $ticket->client->phone }}
+                            </li>
+                            @endif
+                        </ul>
+
+                        {{-- Barre SLA --}}
+                        @php
+                            $total = $ticket->created_at->diffInMinutes($ticket->resolution_due_at ?? now()->addDays(5));
+                            $elapsed = $ticket->created_at->diffInMinutes(now());
+                            $percent = $total > 0 ? min(100, ($elapsed / $total) * 100) : 0;
+                        @endphp
+                        <div class="mt-3 pt-3 border-top">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted small">Progression SLA</span>
+                                <span class="fw-bold">{{ round($percent) }}%</span>
+                            </div>
+                            <div class="progress" style="height:8px; border-radius:4px;">
+                                <div class="progress-bar {{ $percent > 90 ? 'bg-danger' : ($percent > 70 ? 'bg-warning' : 'bg-success') }}"
+                                     style="width:{{ $percent }}%; border-radius:4px; transition: width 0.6s ease;">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div> -->
-        </div>
+            </div>
 
-        {{-- Colonne droite : timeline conversationnelle --}}
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-4"><i class="bi bi-clock-history me-2"></i> Activités</h5>
-                    <div class="timeline-custom" style="max-height: 70vh; overflow-y: auto; padding-right: 8px;">
-    @foreach($activities as $activity)
+            {{-- Colonne droite : timeline --}}
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4">
+                            <i class="mdi mdi-clock-history text-primary me-2"></i>
+                            Activités
+                            <span class="badge bg-light text-dark ms-2">{{ $activities->count() }}</span>
+                        </h5>
 
-        {{-- RÉOUVERTURE --}}
-        @if($activity['type'] === 'reopen')
-        <div class="d-flex gap-3 mb-4">
-            <div class="flex-shrink-0">
-                <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                    <i class="bi bi-arrow-counterclockwise text-white"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                <small class="text-muted d-block mb-1">
-                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
-                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
-                </small>
-                <p class="mb-1">{{ $activity['data']->message }}</p>
-                @if($activity['data']->attachment_path)
-                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-warning rounded-pill mt-1">
-                        <i class="bi bi-paperclip me-1"></i> Voir la pièce jointe
-                    </a>
-                @endif
-            </div>
-        </div>
-        @endif
+                        <div class="timeline-custom" style="max-height:70vh; overflow-y:auto; padding-right:8px;">
+                            @foreach($activities as $activity)
+                                @php
+                                    $iconMap = [
+                                        'reopen' => ['icon' => 'mdi-refresh', 'color' => 'warning', 'label' => 'Réouverture'],
+                                        'resolution' => ['icon' => 'mdi-check-circle', 'color' => 'success', 'label' => 'Résolution'],
+                                        'comment' => ['icon' => 'mdi-chat', 'color' => 'primary', 'label' => 'Commentaire'],
+                                        'document' => ['icon' => 'mdi-paperclip', 'color' => 'info', 'label' => 'Document'],
+                                        'hold' => ['icon' => 'mdi-pause-circle', 'color' => 'secondary', 'label' => 'En attente'],
+                                        'transfer' => ['icon' => 'mdi-send', 'color' => 'secondary', 'label' => 'Transfert'],
+                                        'assignment' => ['icon' => 'mdi-account-plus', 'color' => 'success', 'label' => 'Assignation'],
+                                        'start' => ['icon' => 'mdi-play-circle', 'color' => 'info', 'label' => 'Démarrage'],
+                                        'resume' => ['icon' => 'mdi-play-circle', 'color' => 'info', 'label' => 'Reprise'],
+                                        'close' => ['icon' => 'mdi-lock', 'color' => 'dark', 'label' => 'Clôture'],
+                                    ];
+                                    $type = $activity['type'];
+                                    $meta = $iconMap[$type] ?? ['icon' => 'mdi-circle', 'color' => 'secondary', 'label' => $type];
+                                    $isRight = in_array($type, ['resolution']);
+                                    $bgColor = $meta['color'];
+                                @endphp
 
-        {{-- RÉSOLUTION --}}
-        @if($activity['type'] === 'resolution')
-        <div class="d-flex justify-content-end gap-3 mb-4">
-            <div class="flex-shrink-0">
-                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                    <i class="bi bi-check2-circle text-white"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-success text-white rounded-4 p-3 shadow-sm">
-                <small class="opacity-75 d-block mb-1">
-                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
-                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
-                </small>
-                <div class="fw-bold mb-2">Ticket résolu</div>
-                <p class="mb-2">{{ $activity['data']->message }}</p>
-                @if($activity['data']->attachment_path)
-                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-light rounded-pill mt-1">
-                        <i class="bi bi-paperclip me-1"></i> Voir la pièce jointe
-                    </a>
-                @endif
-            </div>
-        </div>
-        @endif
+                                <div class="d-flex gap-3 mb-4 {{ $isRight ? 'flex-row-reverse' : '' }}">
+                                    {{-- Icône --}}
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-{{ $bgColor }}-subtle rounded-circle d-flex align-items-center justify-content-center"
+                                             style="width:42px;height:42px;">
+                                            <i class="mdi {{ $meta['icon'] }} text-{{ $bgColor }}" style="font-size:20px;"></i>
+                                        </div>
+                                    </div>
 
-        {{-- COMMENTAIRE --}}
-        @if($activity['type'] === 'comment')
-        <div class="d-flex gap-3 mb-4">
-            <div class="flex-shrink-0">
-                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                    <i class="bi bi-chat text-white"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                <small class="text-muted d-block mb-1">
-                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
-                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
-                </small>
-                <p class="mb-1">{{ $activity['data']->message }}</p>
-                @if(isset($activity['data']->attachment_path) && $activity['data']->attachment_path)
-                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill mt-1">
-                        <i class="bi bi-paperclip me-1"></i> Voir la pièce jointe
-                    </a>
-                @endif
-            </div>
-        </div>
-        @endif
+                                    {{-- Contenu --}}
+                                    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+                                        <small class="text-muted d-block mb-1">
+                                            @php
+                                                $userName = match($type) {
+                                                    'document' => $activity['data']->uploader->name ?? 'Utilisateur',
+                                                    default => $activity['data']->user->name ?? 'Utilisateur'
+                                                };
+                                            @endphp
+                                            {{ $userName }}
+                                            <span class="float-end">
+                                                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
+                                            </span>
+                                        </small>
 
-        @if($activity['type'] === 'document')
-<div class="d-flex gap-3 mb-4">
-    <div class="flex-shrink-0">
-        <div class="bg-info rounded-circle d-flex align-items-center justify-content-center"
-             style="width:42px;height:42px;">
-            <i class="bi bi-search text-white"></i>
-        </div>
-    </div>
+                                        @if($type === 'resolution')
+                                            <div class="fw-bold text-success mb-1">Ticket résolu</div>
+                                        @elseif($type === 'start')
+                                            <div class="fw-bold text-info mb-1">Traitement démarré</div>
+                                        @elseif($type === 'resume')
+                                            <div class="fw-bold text-info mb-1">Traitement repris</div>
+                                        @elseif($type === 'close')
+                                            <div class="fw-bold text-dark mb-1">Ticket clôturé</div>
+                                        @endif
 
-    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-        <small class="text-muted d-block mb-1">
-            {{ $activity['data']->uploader->name ?? 'Utilisateur' }}
-            <span class="float-end">
-                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
-            </span>
-        </small>
+                                        @if(in_array($type, ['reopen', 'resolution', 'comment', 'hold', 'transfer', 'assignment']))
+                                            <p class="mb-1">{{ $activity['data']->message }}</p>
+                                        @endif
 
-         <p class="mb-2">
-            {{ $activity['data']->description ?? $activity['data']->file_name }}
-        </p>
+                                        @if($type === 'document')
+                                            <p class="mb-1">
+                                                {{ $activity['data']->description ?? $activity['data']->file_name }}
+                                            </p>
+                                        @endif
 
-        <a href="{{ asset('storage/'.$activity['data']->file_path) }}"
-           target="_blank"
-           class="btn btn-sm btn-outline-dark rounded-pill">
-            <i class="bi bi-download me-1"></i>
-            Pièce jointe
-        </a>
-    </div>
-</div>
-@endif
+                                        {{-- Pièces jointes --}}
+                                        @php
+                                            $attachPath = $activity['data']->attachment_path ?? null;
+                                            $attach2Path = $activity['data']->attachment2_path ?? null;
+                                        @endphp
+                                        @if($attachPath)
+                                            <a href="{{ asset('storage/' . $attachPath) }}"
+                                               target="_blank"
+                                               class="btn btn-sm btn-outline-{{ $bgColor }} rounded-pill mt-1">
+                                                <i class="mdi mdi-paperclip me-1"></i> Voir la pièce jointe
+                                            </a>
+                                        @endif
+                                        @if($attach2Path)
+                                            <a href="{{ asset('storage/' . $attach2Path) }}"
+                                               target="_blank"
+                                               class="btn btn-sm btn-outline-{{ $bgColor }} rounded-pill mt-1 ms-2">
+                                                <i class="mdi mdi-paperclip me-1"></i> Ordre de service
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
 
-        {{-- MISE EN ATTENTE --}}
-        @if($activity['type'] === 'hold')
-        <div class="d-flex gap-3 mb-4">
-            <div class="flex-shrink-0">
-                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                    <i class="bi bi-pause text-white"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                <small class="text-muted d-block mb-1">
-                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
-                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
-                </small>
-                <p class="mb-1">{{ $activity['data']->message }}</p>
-                @if($activity['data']->attachment_path)
-                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill mt-1">
-                        <i class="bi bi-paperclip me-1"></i> Voir la pièce jointe
-                    </a>
-                @endif
-            </div>
-        </div>
-        @endif
-
-        {{-- TRANSFERT --}}
-        @if($activity['type'] === 'transfer')
-        <div class="d-flex gap-3 mb-4">
-            <div class="flex-shrink-0">
-                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                    <i class="bi bi-send text-white"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                <small class="text-muted d-block mb-1">
-                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
-                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
-                </small>
-                <p class="mb-1">{{ $activity['data']->message }}</p>
-                @if($activity['data']->attachment_path)
-                    <a href="{{ asset('storage/' . $activity['data']->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill mt-1">
-                        <i class="bi bi-paperclip me-1"></i> Fiche problème
-                    </a>
-                @endif
-                @if($activity['data']->attachment2_path)
-                    <a href="{{ asset('storage/' . $activity['data']->attachment2_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill mt-1 ms-2">
-                        <i class="bi bi-paperclip me-1"></i> Ordre de service
-                    </a>
-                @endif
-            </div>
-        </div>
-        @endif
-
-        {{-- ASSIGNATION TECHNICIENS --}}
-        @if($activity['type'] === 'assignment')
-        <div class="d-flex gap-3 mb-4">
-            <div class="flex-shrink-0">
-                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                    <i class="bi bi-people text-white"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                <small class="text-muted d-block mb-1">
-                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
-                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
-                </small>
-                <p class="mb-1">{{ $activity['data']->message }}</p>
-            </div>
-        </div>
-        @endif
-
-        {{-- DÉMARRAGE --}}
-        @if($activity['type'] === 'start')
-        <div class="d-flex gap-3 mb-4">
-            <div class="flex-shrink-0">
-                <div class="bg-info rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                    <i class="bi bi-play-circle-fill text-white"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                <small class="text-muted d-block mb-1">
-                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
-                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
-                </small>
-                <p class="mb-1">Traitement démarré</p>
-            </div>
-        </div>
-        @endif
-
-        {{-- REPRISE --}}
-        @if($activity['type'] === 'resume')
-        <div class="d-flex gap-3 mb-4">
-            <div class="flex-shrink-0">
-                <div class="bg-info rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                    <i class="bi bi-play-circle text-white"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                <small class="text-muted d-block mb-1">
-                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
-                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
-                </small>
-                <p class="mb-1">Traitement repris</p>
-            </div>
-        </div>
-        @endif
-
-        {{-- CLÔTURE --}}
-        @if($activity['type'] === 'close')
-        <div class="d-flex gap-3 mb-4">
-            <div class="flex-shrink-0">
-                <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                    <i class="bi bi-lock-fill text-white"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                <small class="text-muted d-block mb-1">
-                    {{ $activity['data']->user->name ?? 'Utilisateur' }}
-                    <span class="float-end">{{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}</span>
-                </small>
-                <p class="mb-1">Ticket clôturé</p>
-            </div>
-        </div>
-        @endif
-
-    @endforeach
-</div>
+                            @if($activities->isEmpty())
+                                <div class="text-center py-4">
+                                    <i class="mdi mdi-clock-alert-outline text-muted" style="font-size:48px;"></i>
+                                    <p class="text-muted mt-2">Aucune activité pour ce ticket.</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -532,7 +339,9 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
             @csrf @method('PATCH')
             <div class="modal-content rounded-4 border-0 shadow-lg">
                 <div class="modal-header bg-success text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-check2-circle me-2"></i> Rapport de résolution</h5>
+                    <h5 class="modal-title fw-bold">
+                        <i class="mdi mdi-check-circle me-2"></i> Rapport de résolution
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
@@ -547,7 +356,9 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
                 </div>
                 <div class="modal-footer bg-light rounded-bottom-4">
                     <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-success rounded-pill px-4">Valider la résolution</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4">
+                        <i class="mdi mdi-check me-1"></i> Valider la résolution
+                    </button>
                 </div>
             </div>
         </form>
@@ -561,7 +372,9 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
             @csrf
             <div class="modal-content rounded-4 border-0 shadow-lg">
                 <div class="modal-header bg-primary text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-chat-dots me-2"></i> Ajouter un commentaire</h5>
+                    <h5 class="modal-title fw-bold">
+                        <i class="mdi mdi-chat me-2"></i> Ajouter un commentaire
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
@@ -576,26 +389,30 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
                 </div>
                 <div class="modal-footer bg-light rounded-bottom-4">
                     <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4">Envoyer</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                        <i class="mdi mdi-send me-1"></i> Envoyer
+                    </button>
                 </div>
             </div>
         </form>
     </div>
 </div>
 
-{{-- Modal Transfert unifié --}}
+{{-- Modal Transfert --}}
 <div class="modal fade" id="transferModal" tabindex="-1">
-    <div class="modal-dialog bg-secondary">
+    <div class="modal-dialog">
         <form method="POST" action="{{ route('tickets.transfer', $ticket->id) }}" enctype="multipart/form-data" id="transferForm">
             @csrf @method('PATCH')
-            <div class="modal-content border-0 rounded-4">
-                <div class="modal-header">
-                    <h5 class="modal-title">Transférer le ticket</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-secondary text-white rounded-top-4">
+                    <h5 class="modal-title fw-bold">
+                        <i class="mdi mdi-swap-horizontal me-2"></i> Transférer le ticket
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     @if($errors->any())
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger rounded-3">
                             <ul class="mb-0">
                                 @foreach($errors->all() as $error)
                                     <li>{{ $error }}</li>
@@ -604,27 +421,24 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
                         </div>
                     @endif
 
-                    {{-- Type de transfert --}}
                     <div class="mb-3">
-                        <label class="form-label">Type de transfert</label>
-                        <select name="target_type" id="targetType" class="form-select" required>
+                        <label class="form-label fw-semibold">Type de transfert</label>
+                        <select name="target_type" id="targetType" class="form-select rounded-3" required>
                             <option value="user">Autre unité ENEO</option>
                             <option value="company">Entreprise externe</option>
                         </select>
                     </div>
 
-                    {{-- Champs communs (motif) --}}
                     <div class="mb-3">
-                        <label>Motif du transfert</label>
-                        <textarea name="reason" class="form-control" rows="2"></textarea>
+                        <label class="form-label fw-semibold">Motif du transfert</label>
+                        <textarea name="reason" class="form-control rounded-3" rows="2" required></textarea>
                     </div>
 
-                    {{-- SECTION POUR AUTRE UNITÉ ENEO --}}
                     <div id="userSection">
-                        <div class="row mb-3">
+                        <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label>Unité</label>
-                                <select id="unitTransfer" class="form-select">
+                                <label class="form-label fw-semibold">Unité</label>
+                                <select id="unitTransfer" class="form-select rounded-3">
                                     <option value="">-- Sélectionner --</option>
                                     @foreach($units as $unit)
                                         <option value="{{ $unit->id }}">{{ $unit->name }}</option>
@@ -632,8 +446,8 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label>Agence</label>
-                                <select id="agencyTransfer" class="form-select">
+                                <label class="form-label fw-semibold">Agence</label>
+                                <select id="agencyTransfer" class="form-select rounded-3">
                                     <option value="">-- Sélectionner --</option>
                                     @foreach($agencies as $agency)
                                         <option value="{{ $agency->id }}">{{ $agency->name }}</option>
@@ -642,127 +456,115 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label>Superviseur (ENEO)</label>
-                            <select name="user_id" id="supervisorTransfer" class="form-select">
+                            <label class="form-label fw-semibold">Superviseur (ENEO)</label>
+                            <select name="user_id" id="supervisorTransfer" class="form-select rounded-3">
                                 <option value="">-- Sélectionner d'abord unité et agence --</option>
                             </select>
                         </div>
                     </div>
 
-                    {{-- SECTION POUR ENTREPRISE EXTERNE --}}
-                    <div id="companySection" style="display: none;">
+                    <div id="companySection" style="display:none;">
                         <div class="mb-3">
-                            <label>Entreprise</label>
-                            <select name="company_id" id="companySelect" class="form-select">
-    <option value="">-- Sélectionner --</option>
-    @foreach($companies as $company)
-        @if($company->name !== 'ENEO')
-            <option value="{{ $company->id }}">{{ $company->name }}</option>
-        @endif
-    @endforeach
-</select>
+                            <label class="form-label fw-semibold">Entreprise</label>
+                            <select name="company_id" id="companySelect" class="form-select rounded-3">
+                                <option value="">-- Sélectionner --</option>
+                                @foreach($companies as $company)
+                                    @if($company->name !== 'ENEO')
+                                        <option value="{{ $company->id }}">{{ $company->name }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
                         </div>
                         <div class="mb-3">
-                            <label>Superviseur (entreprise)</label>
-                            <select name="user_id" id="companySupervisorSelect" class="form-select" disabled>
+                            <label class="form-label fw-semibold">Superviseur (entreprise)</label>
+                            <select name="user_id" id="companySupervisorSelect" class="form-select rounded-3" disabled>
                                 <option value="">-- Sélectionnez d'abord une entreprise --</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label>Fiche problème</label>
-                            <input type="file" name="attachment1" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                            <label class="form-label fw-semibold">Fiche problème</label>
+                            <input type="file" name="attachment1" class="form-control rounded-3" accept=".pdf,.jpg,.jpeg,.png">
                         </div>
                         <div class="mb-3">
-                            <label>Ordre de service</label>
-                            <input type="file" name="attachment2" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                            <label class="form-label fw-semibold">Ordre de service</label>
+                            <input type="file" name="attachment2" class="form-control rounded-3" accept=".pdf,.jpg,.jpeg,.png">
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Transférer</button>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                        <i class="mdi mdi-check me-1"></i> Transférer
+                    </button>
                 </div>
             </div>
         </form>
     </div>
 </div>
 
+{{-- Modal Hold --}}
 <div class="modal fade" id="holdModal" tabindex="-1">
     <div class="modal-dialog">
-
-        <form method="POST"
-              action="{{ route('tickets.hold', $ticket->id) }}"
-              enctype="multipart/form-data">
-
-            @csrf
-            @method('PATCH')
-
-            <div class="modal-content">
-
-                <div class="modal-header bg-secondary">
-                    <h5 class="modal-title text-white">Mettre en attente</h5>
+        <form method="POST" action="{{ route('tickets.hold', $ticket->id) }}" enctype="multipart/form-data">
+            @csrf @method('PATCH')
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-secondary text-white rounded-top-4">
+                    <h5 class="modal-title fw-bold">
+                        <i class="mdi mdi-pause-circle me-2"></i> Mettre en attente
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-
-                <div class="modal-body">
-
-                    <textarea name="reason"
-                              class="form-control mb-3"
-                              placeholder="Motif obligatoire"
-                              required></textarea>
-
-                    <input type="file"
-                           name="attachment"
-                           class="form-control">
-
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Motif</label>
+                        <textarea name="reason" class="form-control rounded-3" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Pièce jointe (optionnel)</label>
+                        <input type="file" name="attachment" class="form-control rounded-3">
+                    </div>
                 </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-secondary">Valider</button>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-secondary rounded-pill px-4">
+                        <i class="mdi mdi-check me-1"></i> Valider
+                    </button>
                 </div>
-
             </div>
-
         </form>
-
     </div>
 </div>
 
+{{-- Modal Reopen --}}
 <div class="modal fade" id="reopenModal" tabindex="-1">
     <div class="modal-dialog">
-
-        <form method="POST"
-              action="{{ route('tickets.reopen', $ticket->id) }}"
-              enctype="multipart/form-data">
-
-            @csrf
-            @method('PATCH')
-
-            <div class="modal-content">
-
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title">Réouvrir le ticket</h5>
+        <form method="POST" action="{{ route('tickets.reopen', $ticket->id) }}" enctype="multipart/form-data">
+            @csrf @method('PATCH')
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-warning text-white rounded-top-4">
+                    <h5 class="modal-title fw-bold">
+                        <i class="mdi mdi-refresh me-2"></i> Réouvrir le ticket
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-
-                <div class="modal-body">
-
-                    <textarea name="reason"
-                              class="form-control mb-3"
-                              placeholder="Motif de réouverture"
-                              required></textarea>
-
-                    <input type="file"
-                           name="attachment"
-                           class="form-control">
-
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Motif de réouverture</label>
+                        <textarea name="reason" class="form-control rounded-3" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Pièce jointe (optionnel)</label>
+                        <input type="file" name="attachment" class="form-control rounded-3">
+                    </div>
                 </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-warning">Réouvrir</button>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4">
+                        <i class="mdi mdi-check me-1"></i> Réouvrir
+                    </button>
                 </div>
-
             </div>
-
         </form>
-
     </div>
 </div>
 
@@ -773,7 +575,9 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
             @csrf
             <div class="modal-content rounded-4 border-0 shadow-lg">
                 <div class="modal-header bg-info text-white rounded-top-4">
-                    <h5 class="modal-title fw-bold"><i class="bi bi-paperclip me-2"></i> Données d'inspection</h5>
+                    <h5 class="modal-title fw-bold">
+                        <i class="mdi mdi-paperclip me-2"></i> Données d'inspection
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
@@ -788,80 +592,45 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
                 </div>
                 <div class="modal-footer bg-light rounded-bottom-4">
                     <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-info rounded-pill px-4 text-white">Ajouter</button>
+                    <button type="submit" class="btn btn-info rounded-pill px-4 text-white">
+                        <i class="mdi mdi-check me-1"></i> Ajouter
+                    </button>
                 </div>
             </div>
         </form>
     </div>
 </div>
 
-<div class="modal fade"
-     id="assignModal"
-     tabindex="-1">
-
+{{-- Modal Assigner --}}
+<div class="modal fade" id="assignModal" tabindex="-1">
     <div class="modal-dialog">
-
-        <form method="POST"
-       action="{{ route('tickets.assign', $ticket->id) }}">
-
-    @csrf
-    @method('PATCH')
-
-    <div class="modal-content border-0 rounded-4">
-
-        <div class="modal-header">
-
-            <h5 class="modal-title">
-                Assigner techniciens
-            </h5>
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal">
-            </button>
-
-        </div>
-
-        <div class="modal-body">
-
-            <label class="form-label">
-                Sélectionner techniciens
-            </label>
-
-            <select name="technicians[]"
-                    class="form-select"
-                    multiple
-                    required>
-
-                @foreach($technicians as $technician)
-
-                    <option value="{{ $technician->id }}">
-                        {{ $technician->name }}
-                    </option>
-
-                @endforeach
-
-            </select>
-
-        </div>
-
-        <div class="modal-footer">
-
-            <button type="submit"
-                    class="btn btn-primary rounded-pill">
-
-                Assigner
-
-            </button>
-
-        </div>
-
+        <form method="POST" action="{{ route('tickets.assign', $ticket->id) }}">
+            @csrf @method('PATCH')
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-success text-white rounded-top-4">
+                    <h5 class="modal-title fw-bold">
+                        <i class="mdi mdi-account-plus me-2"></i> Assigner des techniciens
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <label class="form-label fw-semibold">Sélectionner les techniciens</label>
+                    <select name="technicians[]" class="form-select rounded-3" multiple required>
+                        @foreach($technicians as $technician)
+                            <option value="{{ $technician->id }}">{{ $technician->name }}</option>
+                        @endforeach
+                    </select>
+                    <div class="form-text">Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs techniciens.</div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4">
+                        <i class="mdi mdi-check me-1"></i> Assigner
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
-
-</form>
-
-    </div>
-
 </div>
 
 @endsection
@@ -869,79 +638,119 @@ $percent = min(100, ($elapsed / max($total,1)) * 100);
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-    const targetType = document.getElementById('targetType');
-    const userSection = document.getElementById('userSection');
-    const companySection = document.getElementById('companySection');
-    const unitSelect = document.getElementById('unitTransfer');
-    const agencySelect = document.getElementById('agencyTransfer');
-    const supervisorSelect = document.getElementById('supervisorTransfer');
-    const companySelect = document.getElementById('companySelect');
-    const companySupervisorSelect = document.getElementById('companySupervisorSelect');
+        const targetType = document.getElementById('targetType');
+        const userSection = document.getElementById('userSection');
+        const companySection = document.getElementById('companySection');
+        const unitSelect = document.getElementById('unitTransfer');
+        const agencySelect = document.getElementById('agencyTransfer');
+        const supervisorSelect = document.getElementById('supervisorTransfer');
+        const companySelect = document.getElementById('companySelect');
+        const companySupervisorSelect = document.getElementById('companySupervisorSelect');
 
-    const allSupervisors = @json($supervisors);
-    const supervisorsByCompany = @json($supervisorsByCompany);
+        const allSupervisors = @json($supervisors);
+        const supervisorsByCompany = @json($supervisorsByCompany);
 
-    // Filtrage superviseurs ENEO
-    function loadSupervisors() {
-        const unitId = unitSelect.value;
-        const agencyId = agencySelect.value;
-        supervisorSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
-        if (!unitId || !agencyId) return;
-        const filtered = allSupervisors.filter(sup => 
-            sup.unit_id == unitId && sup.agency_id == agencyId && sup.company_id == 1
-        );
-        filtered.forEach(sup => {
-            const option = document.createElement('option');
-            option.value = sup.id;
-            option.textContent = sup.name;
-            supervisorSelect.appendChild(option);
-        });
-    }
-
-    unitSelect.addEventListener('change', loadSupervisors);
-    agencySelect.addEventListener('change', loadSupervisors);
-
-    // Chargement superviseurs d'entreprise
-    function loadCompanySupervisors() {
-        const companyId = companySelect.value;
-        if (!companyId) {
-            companySupervisorSelect.innerHTML = '<option value="">-- Sélectionnez une entreprise --</option>';
-            companySupervisorSelect.disabled = true;
-            return;
-        }
-        const supervisors = supervisorsByCompany[companyId] || [];
-        companySupervisorSelect.disabled = false;
-        let options = '<option value="">-- Sélectionner --</option>';
-        supervisors.forEach(sup => {
-            options += `<option value="${sup.id}">${sup.name}</option>`;
-        });
-        companySupervisorSelect.innerHTML = options;
-    }
-
-    companySelect.addEventListener('change', loadCompanySupervisors);
-
-    // Basculer l'affichage des sections et gérer les champs requis
-    function toggleSections() {
-        const isUser = targetType.value === 'user';
-        userSection.style.display = isUser ? 'block' : 'none';
-        companySection.style.display = isUser ? 'none' : 'block';
-        
-        // Gérer les fichiers requis pour l'entreprise externe
-        const fileInputs = document.querySelectorAll('#companySection input[type="file"]');
-        if (isUser) {
-            fileInputs.forEach(input => {
-                input.removeAttribute('required');
-                input.value = '';
+        function loadSupervisors() {
+            const unitId = unitSelect.value;
+            const agencyId = agencySelect.value;
+            supervisorSelect.innerHTML = '<option value="">-- Sélectionner --</option>';
+            if (!unitId || !agencyId) return;
+            const filtered = allSupervisors.filter(sup =>
+                sup.unit_id == unitId && sup.agency_id == agencyId && sup.company_id == 1
+            );
+            filtered.forEach(sup => {
+                const option = document.createElement('option');
+                option.value = sup.id;
+                option.textContent = sup.name;
+                supervisorSelect.appendChild(option);
             });
-            // Désactiver le select superviseur entreprise
-            companySupervisorSelect.disabled = true;
-        } else {
-            fileInputs.forEach(input => input.setAttribute('required', 'required'));
         }
+
+        unitSelect.addEventListener('change', loadSupervisors);
+        agencySelect.addEventListener('change', loadSupervisors);
+
+        function loadCompanySupervisors() {
+            const companyId = companySelect.value;
+            if (!companyId) {
+                companySupervisorSelect.innerHTML = '<option value="">-- Sélectionnez une entreprise --</option>';
+                companySupervisorSelect.disabled = true;
+                return;
+            }
+            const supervisors = supervisorsByCompany[companyId] || [];
+            companySupervisorSelect.disabled = false;
+            let options = '<option value="">-- Sélectionner --</option>';
+            supervisors.forEach(sup => {
+                options += `<option value="${sup.id}">${sup.name}</option>`;
+            });
+            companySupervisorSelect.innerHTML = options;
+        }
+
+        companySelect.addEventListener('change', loadCompanySupervisors);
+
+        function toggleSections() {
+            const isUser = targetType.value === 'user';
+            userSection.style.display = isUser ? 'block' : 'none';
+            companySection.style.display = isUser ? 'none' : 'block';
+
+            const fileInputs = document.querySelectorAll('#companySection input[type="file"]');
+            if (isUser) {
+                fileInputs.forEach(input => {
+                    input.removeAttribute('required');
+                    input.value = '';
+                });
+                companySupervisorSelect.disabled = true;
+            } else {
+                fileInputs.forEach(input => input.setAttribute('required', 'required'));
+            }
+        }
+
+        targetType.addEventListener('change', toggleSections);
+        toggleSections();
+    });
+</script>
+@endpush
+
+@push('styles')
+<style>
+    .bg-warning-subtle { background-color: #fff3cd !important; }
+    .bg-danger-subtle { background-color: #f8d7da !important; }
+    .bg-success-subtle { background-color: #d1e7dd !important; }
+    .bg-info-subtle { background-color: #cff4fc !important; }
+    .bg-primary-subtle { background-color: #cfe2ff !important; }
+    .bg-secondary-subtle { background-color: #e9ecef !important; }
+    .bg-dark-subtle { background-color: #dee2e6 !important; }
+    .bg-orange-subtle { background-color: #ffe5d0 !important; }
+
+    .text-warning { color: #ffc107 !important; }
+    .text-danger { color: #dc3545 !important; }
+    .text-success { color: #198754 !important; }
+    .text-info { color: #0dcaf0 !important; }
+    .text-primary { color: #0d6efd !important; }
+    .text-secondary { color: #6c757d !important; }
+    .text-dark { color: #212529 !important; }
+    .text-orange { color: #fd7e14 !important; }
+
+    .rounded-4 { border-radius: 0.75rem !important; }
+    .rounded-top-4 { border-top-left-radius: 0.75rem !important; border-top-right-radius: 0.75rem !important; }
+    .rounded-bottom-4 { border-bottom-left-radius: 0.75rem !important; border-bottom-right-radius: 0.75rem !important; }
+
+    .timeline-custom::-webkit-scrollbar {
+        width: 6px;
+    }
+    .timeline-custom::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    .timeline-custom::-webkit-scrollbar-thumb {
+        background: #ced4da;
+        border-radius: 10px;
+    }
+    .timeline-custom::-webkit-scrollbar-thumb:hover {
+        background: #adb5bd;
     }
 
-    targetType.addEventListener('change', toggleSections);
-    toggleSections();
-});
-</script>
+    .progress-bar {
+        transition: width 0.6s ease;
+    }
+</style>
 @endpush

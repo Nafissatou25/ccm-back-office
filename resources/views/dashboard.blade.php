@@ -32,7 +32,7 @@
 </div>
 
 {{-- CARTES STATUTS --}}
-<div class="d-flex flex-wrap gap-2 mb-4">
+<!-- <div class="d-flex flex-wrap gap-2 mb-4">
     @php
         $cards = [
             ['label' => 'Ouverts',    'value' => $openTickets,              'status' => 'OPEN',        'icon' => 'mdi-alert-circle',    'color' => '#f6c23e'],
@@ -62,7 +62,7 @@
             </div>
         </a>
     @endforeach
-</div>
+</div> -->
 
 {{-- LIGNE 1 : KPI CLÉS --}}
 <div class="row g-3 mb-4">
