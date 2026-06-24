@@ -31,4 +31,9 @@ class Type extends Model
     {
         return $urgent ? $this->ttr_urgent : $this->ttr_normal;
     }
+    // Relation avec les tickets (ajout nécessaire)
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class, 'type_id');
+    }
 }

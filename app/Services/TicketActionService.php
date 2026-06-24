@@ -72,6 +72,23 @@ class TicketActionService
         ]);
     }
 
+    // 🔥 ADMIN restrictions
+    if ($role === 'ADMIN') {
+        $actions = array_diff($actions, [
+            'assign',
+            'hold',
+            'resume',
+            'close',
+            'reopen',
+            'transfer',
+            'assign',
+            'start',
+            'comment',
+            'document',
+            'resolve',
+        ]);
+    }
+
     return array_values($actions);
 }
 }

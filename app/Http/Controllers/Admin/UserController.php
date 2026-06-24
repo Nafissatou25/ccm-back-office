@@ -34,7 +34,7 @@ class UserController extends Controller
     $data = $request->validate([
         'name' => 'required|string',
         'matricule' => 'required|string|unique:users,matricule',
-        'email' => 'required|email|unique:users,email',
+        'email' => 'nullable|email|unique:users,email',
         'password' => 'required',
 
         'role_id' => 'required|exists:roles,id',
@@ -71,7 +71,7 @@ class UserController extends Controller
         $user->update([
     'name' => $request->name,
     'matricule' => $request->matricule,
-    'email' => $request->email,
+    // 'email' => $request->email,
     'role_id' => $request->role_id,
     'agency_id' => $request->agency_id,
     'unit_id' => $request->unit_id,

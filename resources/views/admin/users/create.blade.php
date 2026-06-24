@@ -90,7 +90,7 @@
                                class="form-control @error('email') is-invalid @enderror"
                                placeholder="Email"
                                value="{{ old('email') }}"
-                               required>
+                               >
                         <label for="email">
                             <i class="mdi mdi-email me-1"></i> Email
                         </label>
@@ -134,7 +134,7 @@
                             @foreach($roles as $role)
                                 <option value="{{ $role->id }}"
                                     {{ old('role_id') == $role->id ? 'selected' : '' }}>
-                                    {{ $role->name }}
+                                    {{ $role->display_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -198,7 +198,8 @@
                     <div class="form-floating">
                         <select name="company_id"
                                 id="company_id"
-                                class="form-select @error('company_id') is-invalid @enderror">
+                                class="form-select @error('company_id') is-invalid @enderror"
+                                required>
                             <option value="">-- Choisir --</option>
                             @foreach($companies as $company)
                                 <option value="{{ $company->id }}"

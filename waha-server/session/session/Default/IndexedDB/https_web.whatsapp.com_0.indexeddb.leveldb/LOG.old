@@ -1,0 +1,21 @@
+2026/06/23-11:13:42.410 21e8 Reusing MANIFEST C:\wamp64\www\ccm-backend\waha-server\session\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/06/23-11:13:42.410 21e8 Recovering log #39
+2026/06/23-11:13:42.410 21e8 Reusing old log C:\wamp64\www\ccm-backend\waha-server\session\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000039.log 
+2026/06/23-11:13:42.411 21e8 Delete type=2 #38
+2026/06/23-11:13:43.669 42a4 Manual compaction at level-0 from '\x00\x11\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x12\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/06/23-11:13:43.671 42a4 Manual compaction at level-0 from '\x00\x12\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x13\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/06/23-11:13:43.681 42a4 Manual compaction at level-0 from '\x00\x0f\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x10\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/06/23-11:13:43.682 42a4 Level-0 table #44: started
+2026/06/23-11:13:43.685 42a4 Level-0 table #44: 116187 bytes OK
+2026/06/23-11:13:43.686 42a4 Delete type=0 #39
+2026/06/23-11:13:43.686 4310 Manual compaction at level-0 from '\x00\x10\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x11\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/06/23-11:13:43.687 4310 Level-0 table #46: started
+2026/06/23-11:13:43.689 4310 Level-0 table #46: 721 bytes OK
+2026/06/23-11:13:43.690 4310 Delete type=0 #43
+2026/06/23-11:13:43.691 4310 Manual compaction at level-0 from '\x00\x13\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x14\x00\x00\x00' @ 0 : 0; will stop at '\x00\x13\x00\x00\xc8\x0d\x00l\x00o\x00c\x00a\x00l\x00_\x00s\x00t\x00o\x00r\x00a\x00g\x00e' @ 144107 : 0
+2026/06/23-11:13:43.691 4310 Compacting 1@0 + 1@1 files
+2026/06/23-11:13:43.694 4310 Generated table #47@0: 2385 keys, 20739 bytes
+2026/06/23-11:13:43.694 4310 Compacted 1@0 + 1@1 files => 20739 bytes
+2026/06/23-11:13:43.695 4310 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/06/23-11:13:43.695 4310 Delete type=2 #46
+2026/06/23-11:13:43.696 4310 Manual compaction at level-0 from '\x00\x13\x00\x00\xc8\x0d\x00l\x00o\x00c\x00a\x00l\x00_\x00s\x00t\x00o\x00r\x00a\x00g\x00e' @ 144107 : 0 .. '\x00\x14\x00\x00\x00' @ 0 : 0; will stop at (end)

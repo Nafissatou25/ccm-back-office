@@ -103,9 +103,9 @@
                                             'technician' => 'Technicien',
                                             'customer_service' => 'Service client',
                                         ];
-                                        $role = strtolower($user->role?->name ?? '');
+                                        $role = strtolower($user->role?->display_name ?? '');
                                         $color = $roleColors[$role] ?? 'secondary';
-                                        $label = $roleLabel[$role] ?? $user->role?->name ?? '—';
+                                        $label = $roleLabel[$role] ?? $user->role?->display_name ?? '—';
                                     @endphp
                                     <span class="badge bg-{{ $color }}-subtle text-{{ $color }} px-3 py-2 rounded-pill">
                                         {{ $label }}

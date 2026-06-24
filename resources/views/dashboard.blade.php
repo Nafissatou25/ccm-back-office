@@ -28,11 +28,14 @@
         </div>
         @endif
         <button class="btn btn-sm btn-primary rounded-pill px-3"><i class="mdi mdi-filter-outline"></i> Filtrer</button>
+        <a href="{{ route('dashboard.export', request()->query()) }}" class="btn btn-sm btn-success rounded-pill px-3">
+        <i class="mdi mdi-file-excel"></i> Exporter
+    </a>
     </form>
 </div>
 
 {{-- CARTES STATUTS --}}
-<!-- <div class="d-flex flex-wrap gap-2 mb-4">
+<div class="d-flex flex-wrap gap-2 mb-4">
     @php
         $cards = [
             ['label' => 'Ouverts',    'value' => $openTickets,              'status' => 'OPEN',        'icon' => 'mdi-alert-circle',    'color' => '#f6c23e'],
@@ -62,66 +65,10 @@
             </div>
         </a>
     @endforeach
-</div> -->
+</div>
 
 {{-- LIGNE 1 : KPI CLÉS --}}
-<div class="row g-3 mb-4">
-    {{-- Taux de résolution dans les délais --}}
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-body text-center p-3">
-                <div class="text-muted small mb-1">Résolution dans les délais</div>
-                @php
-                    $onTimeRate = $totalTickets > 0 ? round((($resolvedTickets - $lateTickets) / max($resolvedTickets, 1)) * 100) : 0;
-                    $onTimeRate = max(0, $onTimeRate);
-                    $onTimeColor = $onTimeRate >= 80 ? '#1cc88a' : ($onTimeRate >= 50 ? '#f6c23e' : '#e74a3b');
-                @endphp
-                <h2 class="fw-bold mb-0" style="color: {{ $onTimeColor }};">{{ $onTimeRate }}%</h2>
-                <!-- <small class="text-muted">{{ $resolvedTickets }} résolus / {{ $lateTickets }} en retard</small> -->
-            </div>
-        </div>
-    </div>
 
-    {{-- Taux de réouverture --}}
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-body text-center p-3">
-                <div class="text-muted small mb-1">Taux de réouverture</div>
-                @php
-                    $reopenRate = $resolvedTickets > 0 ? round(($reopenedTickets / $resolvedTickets) * 100) : 0;
-                    $reopenColor = $reopenRate <= 10 ? '#1cc88a' : ($reopenRate <= 25 ? '#f6c23e' : '#e74a3b');
-                @endphp
-                <h2 class="fw-bold mb-0" style="color: {{ $reopenColor }};">{{ $reopenRate }}%</h2>
-                <!-- <small class="text-muted">{{ $reopenedTickets }} réouvertures</small> -->
-            </div>
-        </div>
-    </div>
-
-    {{-- Tickets urgents --}}
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-body text-center p-3">
-                <div class="text-muted small mb-1">Tickets urgents</div>
-                @php
-                    $urgentRate = $totalTickets > 0 ? round(($urgentTickets / $totalTickets) * 100) : 0;
-                @endphp
-                <h2 class="fw-bold mb-0 text-danger">{{ $urgentRate }}%</h2>
-                <!-- <small class="text-muted">{{ $urgentRate }}% du total</small> -->
-            </div>
-        </div>
-    </div>
-
-    {{-- Délai moyen de résolution --}}
-    <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-body text-center p-3">
-                <div class="text-muted small mb-1">Délai moyen de résolution</div>
-                <h2 class="fw-bold mb-0" style="color:#36b9cc;">{{ $avgResolutionHours }}h</h2>
-                <!-- <small class="text-muted">sur les tickets résolus</small> -->
-            </div>
-        </div>
-    </div>
-</div>
 
 {{-- LIGNE 2 : GRAPHIQUES PRINCIPAUX --}}
 <div class="row g-3 mb-4">
@@ -150,35 +97,18 @@
 <div class="row g-3 mb-4">
     {{-- Types les plus récurrents --}}
     <div class="col-md-6">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-body p-3">
-                <h6 class="fw-semibold mb-3">
-                    <i class="mdi mdi-fire me-1 text-danger"></i>
-                    Types de réclamations les plus fréquents
-                </h6>
-                @forelse($topTypes as $type)
-                    @php
-                        $pct = $totalTickets > 0 ? round(($type->count / $totalTickets) * 100) : 0;
-                    @endphp
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div>
-                                <a href="{{ route('tickets.index', ['status' => 'OPEN']) }}" class="btn btn-sm btn-outline-warning rounded-pill"></a>
-                                <span class="fw-semibold" style="font-size:13px;">{{ $type->name }}</span>
-                                <small class="text-muted ms-1">({{ $type->unit_name ?? '' }})</small>
-                            </div>
-                            <span class="badge bg-light text-dark border">{{ $type->count }} tickets</span>
-                        </div>
-                        <div class="progress" style="height:6px;">
-                            <div class="progress-bar" style="width:{{ $pct }}%; background:#4e73df;"></div>
-                        </div>
-                    </div>
-                @empty
-                    <p class="text-muted small">Aucune donnée</p>
-                @endforelse
+    <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-body p-3">
+            <h6 class="fw-semibold mb-3">
+                <i class="mdi mdi-fire me-1 text-danger"></i>
+                Types de réclamations les plus fréquents
+            </h6>
+            <div style="height:250px;">
+                <canvas id="topTypesChart"></canvas>
             </div>
         </div>
     </div>
+</div>
 
     {{-- Tickets urgents non résolus par agence --}}
     <div class="col-md-6">
@@ -268,29 +198,31 @@
     </div>
 
     {{-- Tickets sans technicien assigné --}}
-    <!-- <div class="col-md-4">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-            <div class="card-body p-3">
-                <h6 class="fw-semibold mb-3">
-                    <i class="mdi mdi-account-alert me-1" style="color:#fd7e14;"></i>
-                    Tickets sans technicien
-                </h6>
-                <div class="text-center py-3">
-                    <h1 class="fw-bold" style="color:#fd7e14; font-size:3rem;">{{ $unassignedTickets }}</h1>
-                    <p class="text-muted mb-3">tickets ouverts sans technicien assigné</p>
-                    <a href="{{ route('tickets.index', ['status' => 'OPEN']) }}" class="btn btn-sm btn-outline-warning rounded-pill">
-                        Voir les tickets <i class="mdi mdi-arrow-right"></i>
-                    </a>
-                </div>
-                @if($unassignedTickets > 0)
-                    <div class="alert alert-warning alert-sm py-2 px-3 mb-0" style="font-size:12px;">
-                        <i class="mdi mdi-information-outline me-1"></i>
-                        Ces tickets attendent d'être pris en charge.
-                    </div>
-                @endif
+    <div class="col-md-4">
+    <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-body p-3">
+            <h6 class="fw-semibold mb-3">
+                <i class="mdi mdi-whatsapp me-1" style="color:#25D366;"></i>
+                Demandes WhatsApp
+            </h6>
+            <div class="text-center py-3">
+                <h1 class="fw-bold" style="color:#25D366; font-size:3rem;">
+                    {{ $pendingWhatsappRequests ?? 0 }}
+                </h1>
+                <p class="text-muted mb-3">demandes en attente de traitement</p>
+                <a href="{{ route('admin.whatsapp.index') }}" class="btn btn-sm btn-outline-success rounded-pill">
+                    Voir les demandes <i class="mdi mdi-arrow-right"></i>
+                </a>
             </div>
+            @if(($pendingWhatsappRequests ?? 0) > 0)
+                <div class="alert alert-success alert-sm py-2 px-3 mb-0" style="font-size:12px;">
+                    <i class="mdi mdi-information-outline me-1"></i>
+                    Ces demandes peuvent être converties en tickets.
+                </div>
+            @endif
         </div>
-    </div> -->
+    </div>
+</div>
 </div>
 
 @endsection
@@ -347,6 +279,39 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // ── Top 5 types de réclamations ──
+new Chart(document.getElementById('topTypesChart'), {
+    type: 'bar',
+    data: {
+        labels: @json($topTypesLabels),
+        datasets: [{
+            label: 'Nombre de tickets',
+            data: @json($topTypesData),
+            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+            borderRadius: 6,
+            barPercentage: 0.6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: (ctx) => `${ctx.raw} tickets`
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { stepSize: 1 }
+            }
+        }
+    }
+});
 
     // ── Répartition des statuts ───────────────────────────────
     new Chart(document.getElementById('statusChart'), {

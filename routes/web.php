@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TicketCommentController;
 use App\Http\Controllers\TicketDocumentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\WhatsappRequestController;
 
 
 
@@ -32,6 +33,12 @@ Route::prefix('admin')
         Route::resource('agencies', \App\Http\Controllers\Admin\AgencyController::class);
         Route::resource('types', \App\Http\Controllers\Admin\TypeController::class);
         Route::resource('slaRules', \App\Http\Controllers\Admin\SlaRuleController::class);
+
+         Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
+        Route::get('/',                         [WhatsappRequestController::class, 'index'])->name('index');
+        Route::get('/{whatsappRequest}',        [WhatsappRequestController::class, 'show'])->name('show');
+        Route::post('/{whatsappRequest}/convert', [WhatsappRequestController::class, 'convert'])->name('convert');
+    });
     });
 
     /*
@@ -126,4 +133,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/tickets/{ticket}/documents', [TicketDocumentController::class, 'store'])
         ->name('tickets.documents.store');
+
+    
+        Route::get('/dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
 });

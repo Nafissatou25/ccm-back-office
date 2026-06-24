@@ -9,22 +9,29 @@
     <div>
         <h3 class="mb-0 fw-bold">
             <i class="mdi mdi-ticket me-2 text-primary"></i>
-            Tickets
+            Liste des tickets
         </h3>
         <p class="text-muted small mb-0">
             {{ $stats['total'] }} ticket(s) au total
         </p>
     </div>
+    <div class="d-flex gap-2">
     @php $role = strtolower(auth()->user()->role?->name); @endphp
+    @if(in_array($role, ['admin']))
+            <a href="{{ route('dashboard') }}" class="btn btn-primary rounded-pill px-4">
+                <i class="mdi mdi-view-dashboard"></i> Tableau de bord
+            </a>
+        @endif
     @if(in_array($role, ['manager', 'customer_service', 'supervisor', 'admin']))
         <a href="{{ route('tickets.create') }}" class="btn btn-primary rounded-pill px-4">
             <i class="mdi mdi-plus me-1"></i> Nouveau ticket
         </a>
     @endif
+    </div>
 </div>
 
 {{-- CARTES STATUTS (cliquables) --}}
- <div class="d-flex flex-wrap gap-3 mb-4">
+ <!-- <div class="d-flex flex-wrap gap-3 mb-4">
     @php
         $currentParams = request()->except('status', 'late');
         $cards = [
@@ -153,7 +160,7 @@
             font-size: 1.2rem;
         }
     }
-</style> 
+</style>  -->
 
 {{-- TABLEAU DES TICKETS --}}
 <div class="card border-0 shadow-sm rounded-4">

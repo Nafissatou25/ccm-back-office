@@ -14,6 +14,10 @@ use App\Http\Controllers\Api\AgencyController;
 use App\Http\Controllers\Api\Admin\SlaController;
 use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Admin\UserController;
+use App\Http\Controllers\Api\WhatsAppBotController;
+
+Route::post('/whatsapp/webhook', [WhatsAppBotController::class, 'handle']);
+Route::get('/whatsapp/webhook', [WhatsAppBotController::class, 'verify']); // pour test
 
 /*
 |--------------------------------------------------------------------------

@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: waha
+    restart: unless-stopped
+    ports:
+      - "3000:3000"   # API HTTP
+      - "3001:3001"   # Dashboard
+    volumes:
+      - ./waha_data:/app/.waha
+    environment:
+      - WAHA_WHATSAPP_DEFAULT_ENGINE=WEB
+      # - WAHA_API_KEY=mon-super-token-secret
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

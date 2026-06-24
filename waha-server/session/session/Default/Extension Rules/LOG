@@ -1,0 +1,4 @@
+2026/06/23-11:12:04.848 2704 Creating DB C:\wamp64\www\ccm-backend\waha-server\session\session\Default\Extension Rules since it was missing.
+2026/06/23-11:12:04.855 2704 Reusing MANIFEST C:\wamp64\www\ccm-backend\waha-server\session\session\Default\Extension Rules/MANIFEST-000001
+2026/06/23-11:12:04.856 2704 Recovering log #3
+2026/06/23-11:12:04.856 2704 Reusing old log C:\wamp64\www\ccm-backend\waha-server\session\session\Default\Extension Rules/000003.log 
