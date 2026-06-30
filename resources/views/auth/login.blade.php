@@ -91,7 +91,7 @@
                 <input
                        name="matricule"
                        class="form-control"
-                       placeholder="Entrez votre mot de passe"
+                       placeholder="Entrez votre matricule"
                        required>
             </div>
         </div>

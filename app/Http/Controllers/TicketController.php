@@ -9,6 +9,7 @@ use App\Models\Unit;
 use App\Models\Company;
 use App\Models\Client;
 use App\Models\User;
+use App\Models\Document;
 use App\Models\TicketActivity;
 use App\Models\SlaRule;
 use App\Models\TicketView;
@@ -22,66 +23,84 @@ use Illuminate\Support\Facades\Http;
 class TicketController extends Controller
 {
     public function index(Request $request)
-    {
-        $user = auth()->user();
-        $user->load('role');
-        $role = strtoupper($user->role?->name);
+{
+    $user = auth()->user();
+    $user->load('role');
+    $role = strtoupper($user->role?->name);
 
-        $eneoCompanyId = Company::where('name', 'ENEO')->first()?->id;
-        $canCreateTicket = false;
+    $eneoCompanyId = Company::where('name', 'ENEO')->first()?->id;
+    $canCreateTicket = false;
 
-        if (in_array($role, ['ADMIN', 'MANAGER', 'CUSTOMER_SERVICE'])) {
-            $canCreateTicket = true;
-        } elseif ($role === 'SUPERVISOR' && $user->company_id == $eneoCompanyId) {
-            $canCreateTicket = true;
-        }
+    if (in_array($role, ['ADMIN', 'MANAGER', 'CUSTOMER_SERVICE'])) {
+        $canCreateTicket = true;
+    } elseif ($role === 'SUPERVISOR' && $user->company_id == $eneoCompanyId) {
+        $canCreateTicket = true;
+    }
 
-        $startDate      = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : null;
-        $endDate        = $request->filled('end_date')   ? Carbon::parse($request->end_date)->endOfDay()     : null;
-        $selectedUnitId = $request->filled('unit_id')    ? (int) $request->unit_id : null;
-        $selectedTypeId = $request->filled('type_id')    ? (int) $request->type_id : null;
+    $startDate      = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : null;
+    $endDate        = $request->filled('end_date')   ? Carbon::parse($request->end_date)->endOfDay()     : null;
+    $selectedUnitId = $request->filled('unit_id')    ? (int) $request->unit_id : null;
+    $selectedTypeId = $request->filled('type_id')    ? (int) $request->type_id : null;
+    $selectedAgencyId = $request->filled('agency_id') ? (int) $request->agency_id : null; // 🆕
 
-        $query = Ticket::with(['type', 'unit', 'views' => function ($q) {
+    $query = Ticket::with(['type', 'unit', 'views' => function ($q) {
         $q->where('user_id', auth()->id());
     }]);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        if ($request->has('late')) {
-            $query->whereNotIn('status', ['RESOLVED', 'CLOSED'])
-                  ->where('resolution_due_at', '<', now());
-        }
+    // Filtres statut / retard
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+    if ($request->has('late')) {
+        $query->whereNotIn('status', ['RESOLVED', 'CLOSED'])
+              ->where('resolution_due_at', '<', now());
+    }
 
-        if (in_array($role, ['ADMIN', 'MANAGER', 'CUSTOMER_SERVICE'])) {
-            // accès complet
-        } elseif ($role === 'SUPERVISOR') {
-            $query->where(function ($q) use ($user) {
-                $q->where('assigned_to', $user->id)
-                  ->orWhereHas('supervisors', fn($sq) => $sq->where('user_id', $user->id));
-            });
-        } elseif ($role === 'TECHNICIAN') {
-            $query->whereHas('technicians', fn($q) => $q->where('users.id', $user->id));
-        } else {
-            $query->where('created_by', $user->id);
-        }
+    // Restrictions par rôle
+    if (in_array($role, ['ADMIN', 'MANAGER', 'CUSTOMER_SERVICE'])) {
+        // accès complet
+    } elseif ($role === 'SUPERVISOR') {
+        $query->where(function ($q) use ($user) {
+            $q->where('assigned_to', $user->id)
+              ->orWhereHas('supervisors', fn($sq) => $sq->where('user_id', $user->id));
+        });
+    } elseif ($role === 'TECHNICIAN') {
+        $query->whereHas('technicians', fn($q) => $q->where('users.id', $user->id));
+    } else {
+        $query->where('created_by', $user->id);
+    }
 
-        if ($selectedUnitId && !in_array($role, ['MANAGER', 'ADMIN', 'CUSTOMER_SERVICE'])) {
-            $query->where('unit_id', $selectedUnitId);
-        }
-        if ($selectedTypeId)  $query->where('type_id', $selectedTypeId);
-        if ($startDate)       $query->where('created_at', '>=', $startDate);
-        if ($endDate)         $query->where('created_at', '<=', $endDate);
+    // ✅ Application des filtres (sans restriction de rôle)
+    if ($selectedUnitId) {
+        $query->where('unit_id', $selectedUnitId);
+    }
+    if ($selectedTypeId) {
+        $query->where('type_id', $selectedTypeId);
+    }
+    if ($selectedAgencyId) {
+        $query->where('agency_id', $selectedAgencyId);
+    }
+    if ($startDate) {
+        $query->where('created_at', '>=', $startDate);
+    }
+    if ($endDate) {
+        $query->where('created_at', '<=', $endDate);
+    }
 
-        $tickets = $query->latest()->get();
+    $tickets = $query->latest()->get();
 
-        $units = in_array($role, ['ADMIN', 'MANAGER', 'CUSTOMER_SERVICE'])
-            ? Unit::orderBy('name')->get()
-            : Unit::where('id', $selectedUnitId)->get();
+    // Données pour les filtres (unités, agences, types)
+    if (in_array($role, ['ADMIN', 'MANAGER', 'CUSTOMER_SERVICE'])) {
+        $units = Unit::orderBy('name')->get();
+        $agencies = Agency::orderBy('name')->get(); // 🆕
+    } else {
+        $units = Unit::where('id', $selectedUnitId)->get();
+        $agencies = Agency::where('id', $selectedAgencyId)->get(); // 🆕
+    }
 
-        $eligibleTypes = $selectedUnitId
-            ? Type::where('unit_id', $selectedUnitId)->orderBy('name')->get()
-            : Type::orderBy('name')->get();
+    $eligibleTypes = $selectedUnitId
+        ? Type::where('unit_id', $selectedUnitId)->orderBy('name')->get()
+        : Type::orderBy('name')->get();
 
         $statusColors = [
             'OPEN'        => 'warning',
@@ -109,10 +128,10 @@ class TicketController extends Controller
         ];
 
         return view('tickets.index', compact(
-            'tickets', 'statusColors', 'units', 'eligibleTypes',
-            'selectedUnitId', 'selectedTypeId', 'startDate', 'endDate',
-            'role', 'stats', 'canCreateTicket'
-        ));
+        'tickets', 'statusColors', 'units', 'agencies', 'eligibleTypes', // 🆕 'agencies' ajouté
+        'selectedUnitId', 'selectedTypeId', 'selectedAgencyId', // 🆕 'selectedAgencyId' ajouté
+        'startDate', 'endDate', 'role', 'stats', 'canCreateTicket'
+    ));
     }
 
     public function create()
@@ -173,21 +192,37 @@ class TicketController extends Controller
             'client_delivery_point'  => 'nullable|string',
         ]);
 
-        // Client
-        $client = Client::where('contract_number', $data['client_contract_number'])
-                        ->orWhere('phone', $data['client_phone'])
-                        ->first();
+        // ── Gestion du client ──────────────────────────────────────────
+// 1. Recherche par téléphone (obligatoire)
+$client = Client::where('phone', $data['client_phone'])->first();
 
-        if (!$client) {
-            $client = Client::create([
-                'contract_number' => $data['client_contract_number'] ?? null,
-                'name'            => $data['client_name'],
-                'firstname'       => $data['client_firstname'] ?? null,
-                'phone'           => $data['client_phone'],
-                'whatsapp'        => $data['client_whatsapp'] ?? null,
-                'delivery_point'  => $data['client_delivery_point'] ?? null,
-            ]);
-        }
+// 2. Si non trouvé par téléphone ET contrat renseigné → recherche par contrat
+if (!$client && !empty($data['client_contract_number'])) {
+    $client = Client::where('contract_number', $data['client_contract_number'])->first();
+}
+
+if ($client) {
+    // Mettre à jour les informations du client trouvé
+    $client->update([
+        'name'            => $data['client_name'],
+        'firstname'       => $data['client_firstname'] ?? $client->firstname,
+        'contract_number' => $data['client_contract_number'] ?? $client->contract_number,
+        'whatsapp'        => $data['client_whatsapp'] ?? $client->whatsapp,
+        'delivery_point'  => $data['client_delivery_point'] ?? $client->delivery_point,
+        // On garde le téléphone existant ou on le met à jour si besoin
+        'phone'           => $data['client_phone'],
+    ]);
+} else {
+    // 3. Créer un nouveau client
+    $client = Client::create([
+        'contract_number' => $data['client_contract_number'] ?? null,
+        'name'            => $data['client_name'] ?? null,
+        'firstname'       => $data['client_firstname'] ?? null,
+        'phone'           => $data['client_phone'],
+        'whatsapp'        => $data['client_whatsapp'] ?? null,
+        'delivery_point'  => $data['client_delivery_point'] ?? null,
+    ]);
+}
 
         // Pièce jointe
         $attachmentPath = $request->file('attachment_path')
@@ -341,33 +376,82 @@ class TicketController extends Controller
         ));
     }
 
-    public function assign(Request $request, Ticket $ticket)
-    {
-        $request->validate(['technicians' => 'required|array']);
+   public function assign(Request $request, Ticket $ticket)
+{
+    $request->validate(['technicians' => 'required|array']);
 
-        $ticket->technicians()->sync($request->technicians);
-        // $ticket->update(['status' => 'IN_PROGRESS']);
+    $ticket->technicians()->sync($request->technicians);
 
-        TicketActivity::create([
-            'ticket_id' => $ticket->id,
-            'user_id'   => auth()->id(),
-            'type'      => 'assignment',
-            'message'   => 'Techniciens assignés',
-        ]);
+    // Récupérer les noms des techniciens assignés
+    $technicianNames = User::whereIn('id', $request->technicians)->pluck('name')->implode(', ');
 
-        return back()->with('success', 'Techniciens assignés avec succès');
-    }
+    TicketActivity::create([
+        'ticket_id' => $ticket->id,
+        'user_id'   => auth()->id(),
+        'type'      => 'assignment',
+        'message'   => $technicianNames,
+    ]);
+
+    return back()->with('success', 'Techniciens assignés avec succès');
+}
 
     public function start(Ticket $ticket)
     {
+
+        $ticket->update([
+            'status'     => 'IN_PROGRESS',
+            'started_at' => now(),
+            'taken_by'   => auth()->id(),
+        ]);
+ // ✅ Création de l'activité
+    TicketActivity::create([
+        'ticket_id' => $ticket->id,
+        'user_id'   => auth()->id(),
+        'type'      => 'start',
+        // 'message'   => 'Traitement démarré par ' . auth()->user()->name,
+        
+    ]);
+
+        return back()->with('success', 'Ticket en cours de traitement');
+    }
+
+    public function storeDocument(Request $request, Ticket $ticket)
+{
+    $request->validate([
+        'name'     => 'required|string|max:500',
+        'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+    ]);
+
+    $path = $request->file('document')->store('documents', 'public');
+
+    // Création du document avec TOUS les champs requis
+    $ticket->documents()->create([
+        'description' => $request->name,
+        'file_path'   => $path,
+        'uploaded_by' => auth()->id(),
+        'file_name'   => $request->file('document')->getClientOriginalName(),
+        'mime_type'   => $request->file('document')->getMimeType(),
+        'size'        => $request->file('document')->getSize(),
+    ]);
+
+    // Démarrer le ticket si ce n'est pas déjà fait
+    if (!in_array($ticket->status, ['IN_PROGRESS', 'RESOLVED', 'CLOSED'])) {
         $ticket->update([
             'status'     => 'IN_PROGRESS',
             'started_at' => now(),
             'taken_by'   => auth()->id(),
         ]);
 
-        return back()->with('success', 'Ticket en cours de traitement');
+        TicketActivity::create([
+            'ticket_id' => $ticket->id,
+            'user_id'   => auth()->id(),
+            'type'      => 'start',
+            // 'message'   => 'Traitement démarré par ' . auth()->user()->name,
+        ]);
     }
+
+    return back()->with('success', 'Données d\'inspection enregistrées et ticket démarré.');
+}
 
     public function resolve(Request $request, Ticket $ticket)
     {
@@ -430,32 +514,43 @@ class TicketController extends Controller
         return back()->with('success', 'Ticket mis en attente');
     }
 
-    public function resume(Ticket $ticket)
-    {
-        if (!$ticket->sla_paused_at) {
-            return back()->with('error', 'Aucune pause SLA active');
-        }
+    public function resume(Request $request, Ticket $ticket)
+{
+    $request->validate([
+        'reason'     => 'required|string',
+        'attachment' => 'nullable|file|max:5120',
+    ]);
 
-        $pauseDuration      = now()->diffInSeconds($ticket->sla_paused_at);
-        $newResolutionDueAt = $ticket->resolution_due_at->copy()->addSeconds($pauseDuration);
-
-        $ticket->update([
-            'status'               => 'IN_PROGRESS',
-            'resolution_due_at'    => $newResolutionDueAt,
-            'total_pause_duration' => $ticket->total_pause_duration + $pauseDuration,
-            'is_sla_paused'        => false,
-            'sla_paused_at'        => null,
-        ]);
-
-        TicketActivity::create([
-            'ticket_id' => $ticket->id,
-            'user_id'   => auth()->id(),
-            'type'      => 'resume',
-            'message'   => 'Traitement repris',
-        ]);
-
-        return back()->with('success', 'Traitement repris');
+    if (!$ticket->sla_paused_at) {
+        return back()->with('error', 'Aucune pause SLA active');
     }
+
+    $path = null;
+    if ($request->hasFile('attachment')) {
+        $path = $request->file('attachment')->store('ticket-resumes', 'public');
+    }
+
+    $pauseDuration      = now()->diffInSeconds($ticket->sla_paused_at);
+    $newResolutionDueAt = $ticket->resolution_due_at->copy()->addSeconds($pauseDuration);
+
+    $ticket->update([
+        'status'               => 'IN_PROGRESS',
+        'resolution_due_at'    => $newResolutionDueAt,
+        'total_pause_duration' => $ticket->total_pause_duration + $pauseDuration,
+        'is_sla_paused'        => false,
+        'sla_paused_at'        => null,
+    ]);
+
+    TicketActivity::create([
+        'ticket_id'       => $ticket->id,
+        'user_id'         => auth()->id(),
+        'type'            => 'resume',
+        'message'         => $request->reason,
+        'attachment_path' => $path,
+    ]);
+
+    return back()->with('success', 'Traitement repris avec succès');
+}
 
     public function close(Ticket $ticket)
     {
@@ -545,7 +640,7 @@ class TicketController extends Controller
                 'ticket_id' => $ticket->id,
                 'user_id'   => auth()->id(),
                 'type'      => 'transfer',
-                'message'   => "Ticket transféré à {$supervisor->name}",
+                'message'   => "à {$supervisor->name}",
             ]);
         } else {
             $company    = Company::findOrFail($request->company_id);

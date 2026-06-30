@@ -12,7 +12,7 @@ class AuthController extends Controller
 {
     // 1. Valider AVANT tout
     $request->validate([
-        'matricule' => 'required|matricule',
+        'matricule' => 'required',
         'password' => 'required'
     ]);
 

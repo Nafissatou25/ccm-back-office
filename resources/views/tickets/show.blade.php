@@ -76,13 +76,11 @@
                 @endif
 
                 @if(in_array('resume', $actions))
-                <form method="POST" action="{{ route('tickets.resume', $ticket->id) }}" class="d-inline">
-                    @csrf @method('PATCH')
-                    <button class="btn btn-outline-info rounded-pill btn-sm px-3">
-                        <i class="mdi mdi-play-circle me-1"></i> Reprendre
-                    </button>
-                </form>
-                @endif
+<button class="btn btn-outline-info rounded-pill btn-sm px-3"
+        data-bs-toggle="modal" data-bs-target="#resumeModal">
+    <i class="mdi mdi-play-circle me-1"></i> Reprendre
+</button>
+@endif
 
                 @if(in_array('resolve', $actions))
                 <button class="btn btn-outline-success rounded-pill btn-sm px-3"
@@ -230,91 +228,99 @@
 
                         <div class="timeline-custom" style="max-height:70vh; overflow-y:auto; padding-right:8px;">
                             @foreach($activities as $activity)
-                                @php
-                                    $iconMap = [
-                                        'reopen' => ['icon' => 'mdi-refresh', 'color' => 'warning', 'label' => 'Réouverture'],
-                                        'resolution' => ['icon' => 'mdi-check-circle', 'color' => 'success', 'label' => 'Résolution'],
-                                        'comment' => ['icon' => 'mdi-chat', 'color' => 'primary', 'label' => 'Commentaire'],
-                                        'document' => ['icon' => 'mdi-paperclip', 'color' => 'info', 'label' => 'Document'],
-                                        'hold' => ['icon' => 'mdi-pause-circle', 'color' => 'secondary', 'label' => 'En attente'],
-                                        'transfer' => ['icon' => 'mdi-send', 'color' => 'secondary', 'label' => 'Transfert'],
-                                        'assignment' => ['icon' => 'mdi-account-plus', 'color' => 'success', 'label' => 'Assignation'],
-                                        'start' => ['icon' => 'mdi-play-circle', 'color' => 'info', 'label' => 'Démarrage'],
-                                        'resume' => ['icon' => 'mdi-play-circle', 'color' => 'info', 'label' => 'Reprise'],
-                                        'close' => ['icon' => 'mdi-lock', 'color' => 'dark', 'label' => 'Clôture'],
-                                    ];
-                                    $type = $activity['type'];
-                                    $meta = $iconMap[$type] ?? ['icon' => 'mdi-circle', 'color' => 'secondary', 'label' => $type];
-                                    $isRight = in_array($type, ['resolution']);
-                                    $bgColor = $meta['color'];
-                                @endphp
+    @php
+        $type = $activity['type'];
 
-                                <div class="d-flex gap-3 mb-4 {{ $isRight ? 'flex-row-reverse' : '' }}">
-                                    {{-- Icône --}}
-                                    <div class="flex-shrink-0">
-                                        <div class="bg-{{ $bgColor }}-subtle rounded-circle d-flex align-items-center justify-content-center"
-                                             style="width:42px;height:42px;">
-                                            <i class="mdi {{ $meta['icon'] }} text-{{ $bgColor }}" style="font-size:20px;"></i>
-                                        </div>
-                                    </div>
+        // Configuration centralisée des activités
+        $config = [
+            'reopen'    => ['icon' => 'mdi-refresh',           'color' => 'warning',  'label' => 'Réouverture'],
+            'resolution'=> ['icon' => 'mdi-check-circle',      'color' => 'success',  'label' => 'Résolution'],
+            'comment'   => ['icon' => 'mdi-chat',              'color' => 'primary',  'label' => 'Commentaire'],
+            'document'  => ['icon' => 'mdi-file-document',     'color' => 'info',     'label' => 'Inspection'],
+            'hold'      => ['icon' => 'mdi-pause-circle',      'color' => 'secondary','label' => 'Mise en attente'],
+            'transfer'  => ['icon' => 'mdi-send',              'color' => 'secondary','label' => 'Transfert'],
+            'assignment'=> ['icon' => 'mdi-account-plus',      'color' => 'success',  'label' => 'Assignation'],
+            'start'     => ['icon' => 'mdi-play-circle',       'color' => 'info',     'label' => 'Démarrage'],
+            'resume'    => ['icon' => 'mdi-play-circle',       'color' => 'info',     'label' => 'Reprise'],
+            'close'     => ['icon' => 'mdi-lock',              'color' => 'dark',     'label' => 'Clôture'],
+        ];
 
-                                    {{-- Contenu --}}
-                                    <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
-                                        <small class="text-muted d-block mb-1">
-                                            @php
-                                                $userName = match($type) {
-                                                    'document' => $activity['data']->uploader->name ?? 'Utilisateur',
-                                                    default => $activity['data']->user->name ?? 'Utilisateur'
-                                                };
-                                            @endphp
-                                            {{ $userName }}
-                                            <span class="float-end">
-                                                {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
-                                            </span>
-                                        </small>
+        $meta = $config[$type] ?? ['icon' => 'mdi-circle', 'color' => 'secondary', 'label' => ucfirst($type)];
+        $bgColor = $meta['color'];
+    @endphp
 
-                                        @if($type === 'resolution')
-                                            <div class="fw-bold text-success mb-1">Ticket résolu</div>
-                                        @elseif($type === 'start')
-                                            <div class="fw-bold text-info mb-1">Traitement démarré</div>
-                                        @elseif($type === 'resume')
-                                            <div class="fw-bold text-info mb-1">Traitement repris</div>
-                                        @elseif($type === 'close')
-                                            <div class="fw-bold text-dark mb-1">Ticket clôturé</div>
-                                        @endif
+    <div class="d-flex gap-3 mb-4">
+        {{-- Icône --}}
+        <div class="flex-shrink-0">
+            <div class="bg-{{ $bgColor }}-subtle rounded-circle d-flex align-items-center justify-content-center"
+                 style="width:42px;height:42px;">
+                <i class="mdi {{ $meta['icon'] }} text-{{ $bgColor }}" style="font-size:20px;"></i>
+            </div>
+        </div>
 
-                                        @if(in_array($type, ['reopen', 'resolution', 'comment', 'hold', 'transfer', 'assignment']))
-                                            <p class="mb-1">{{ $activity['data']->message }}</p>
-                                        @endif
+        {{-- Contenu --}}
+        <div class="flex-grow-1 bg-light rounded-4 p-3 shadow-sm">
+            <small class="text-muted d-block mb-1">
+                @php
+                    $userName = match($type) {
+                        'document' => $activity['data']->uploader->name ?? 'Utilisateur',
+                        default => $activity['data']->user->name ?? 'Utilisateur'
+                    };
+                @endphp
+                {{ $userName }}
+                <span class="float-end">
+                    {{ \Carbon\Carbon::parse($activity['date'])->format('d/m/Y H:i') }}
+                </span>
+            </small>
 
-                                        @if($type === 'document')
-                                            <p class="mb-1">
-                                                {{ $activity['data']->description ?? $activity['data']->file_name }}
-                                            </p>
-                                        @endif
+            {{-- Titre de l'activité --}}
+            <div class="fw-bold text-{{ $bgColor }} mb-1">{{ $meta['label'] }}</div>
 
-                                        {{-- Pièces jointes --}}
-                                        @php
-                                            $attachPath = $activity['data']->attachment_path ?? null;
-                                            $attach2Path = $activity['data']->attachment2_path ?? null;
-                                        @endphp
-                                        @if($attachPath)
-                                            <a href="{{ asset('storage/' . $attachPath) }}"
-                                               target="_blank"
-                                               class="btn btn-sm btn-outline-{{ $bgColor }} rounded-pill mt-1">
-                                                <i class="mdi mdi-paperclip me-1"></i> Voir la pièce jointe
-                                            </a>
-                                        @endif
-                                        @if($attach2Path)
-                                            <a href="{{ asset('storage/' . $attach2Path) }}"
-                                               target="_blank"
-                                               class="btn btn-sm btn-outline-{{ $bgColor }} rounded-pill mt-1 ms-2">
-                                                <i class="mdi mdi-paperclip me-1"></i> Ordre de service
-                                            </a>
-                                        @endif
-                                    </div>
-                                </div>
-                            @endforeach
+            {{-- Contenu spécifique selon le type --}}
+            @if($type === 'resolution')
+                <p class="mb-1"> {{ $activity['data']->message }}</p>
+
+            @elseif($type === 'document')
+                <p class="mb-1">
+                    {{ $activity['data']->description ?? $activity['data']->file_name ?? 'Aucune description' }}
+                </p>
+                @if($activity['data']->file_path)
+                    <a href="{{ asset('storage/' . $activity['data']->file_path) }}"
+                       target="_blank"
+                       class="btn btn-sm btn-outline-info rounded-pill mt-2">
+                        <i class="mdi mdi-paperclip me-1"></i> Voir la pièce jointe
+                    </a>
+                @endif
+
+            @elseif(in_array($type, ['reopen', 'comment', 'hold', 'transfer', 'assignment', 'resume']))
+                @if($activity['data']->message)
+                    <p class="mb-1">{{ $activity['data']->message }}</p>
+                @endif
+
+            @endif
+
+            {{-- Pièces jointes génériques (attachment_path et attachment2_path) --}}
+            @php
+                $attachPath = $activity['data']->attachment_path ?? null;
+                $attach2Path = $activity['data']->attachment2_path ?? null;
+            @endphp
+            @if($attachPath)
+                <a href="{{ asset('storage/' . $attachPath) }}"
+                   target="_blank"
+                   class="btn btn-sm btn-outline-{{ $bgColor }} rounded-pill mt-1">
+                    <i class="mdi mdi-paperclip me-1"></i> Voir la pièce jointe
+                </a>
+            @endif
+            @if($attach2Path)
+                <a href="{{ asset('storage/' . $attach2Path) }}"
+                   target="_blank"
+                   class="btn btn-sm btn-outline-{{ $bgColor }} rounded-pill mt-1 ms-2">
+                    <i class="mdi mdi-paperclip me-1"></i> Ordre de service
+                </a>
+            @endif
+        </div>
+    </div>
+@endforeach
 
                             @if($activities->isEmpty())
                                 <div class="text-center py-4">
@@ -601,6 +607,39 @@
     </div>
 </div>
 
+{{-- Modal Reprise --}}
+<div class="modal fade" id="resumeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('tickets.resume', $ticket->id) }}" enctype="multipart/form-data">
+            @csrf @method('PATCH')
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-info text-white rounded-top-4">
+                    <h5 class="modal-title fw-bold">
+                        <i class="mdi mdi-play-circle me-2"></i> Reprendre le traitement
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description de la reprise</label>
+                        <textarea name="reason" class="form-control rounded-3" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Pièce jointe (optionnel)</label>
+                        <input type="file" name="attachment" class="form-control rounded-3">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-info rounded-pill px-4 text-white">
+                        <i class="mdi mdi-check me-1"></i> Reprendre
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 {{-- Modal Assigner --}}
 <div class="modal fade" id="assignModal" tabindex="-1">
     <div class="modal-dialog">
@@ -748,6 +787,12 @@
     .timeline-custom::-webkit-scrollbar-thumb:hover {
         background: #adb5bd;
     }
+
+    .timeline-custom .text-wrap {
+    word-break: break-word !important;
+    white-space: pre-wrap !important;
+    max-width: 100%;
+}
 
     .progress-bar {
         transition: width 0.6s ease;

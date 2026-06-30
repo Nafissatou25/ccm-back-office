@@ -215,6 +215,17 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Agence</label>
+                            <select id="filterAgency" class="form-select form-select-sm">
+                                <option value="">Toutes</option>
+                                @foreach($agencies as $agency)
+                                    <option value="{{ $agency->id }}" {{ request('agency_id') == $agency->id ? 'selected' : '' }}>
+                                        {{ $agency->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                         <button id="applyFilters" class="btn btn-primary btn-sm w-100 rounded-pill">Appliquer</button>
                     </div>
                 </div>
@@ -234,7 +245,7 @@
                                 <i class="mdi mdi-hash me-1"></i> ID
                             </th>
                             <th class="py-3 text-muted small fw-bold text-uppercase">
-                                <i class="mdi mdi-domain me-1"></i> Unité
+                                <i class="mdi mdi-account me-1"></i> Client
                             </th>
                             <th class="py-3 text-muted small fw-bold text-uppercase">
                                 <i class="mdi mdi-tag me-1"></i> Type
@@ -292,10 +303,10 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if($ticket->unit)
+                                    @if($ticket->client)
                                         <span class="d-flex align-items-center">
-                                            <i class="mdi mdi-domain text-muted me-1" style="font-size:14px;"></i>
-                                            {{ $ticket->unit->name }}
+                                            
+                                            {{ $ticket->client->name }} {{ $ticket->client->firstname  }}
                                         </span>
                                     @else
                                         <span class="text-muted">—</span>
@@ -375,11 +386,13 @@
             const status = document.getElementById('filterStatus').value;
             const unit = document.getElementById('filterUnit').value;
             const type = document.getElementById('filterType').value;
+            const agency = document.getElementById('filterAgency').value
             let url = '{{ route("tickets.index") }}?';
             const params = [];
             if (status) params.push('status=' + status);
             if (unit) params.push('unit_id=' + unit);
             if (type) params.push('type_id=' + type);
+            if (agency) params.push('agency_id=' + agency);
             // Keep existing date filters, etc.
             const currentParams = new URLSearchParams(window.location.search);
             for (let [key, value] of currentParams) {

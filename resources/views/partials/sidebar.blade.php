@@ -1,7 +1,7 @@
 @php
     $role = strtolower(auth()->user()->role?->name ?? '');
     $isAdmin = $role === 'admin';
-    $isManagerOrCS = in_array($role, ['manager', 'customer_service']);
+    $isManagerOrCS = in_array($role, ['manager', 'customer_service','supervisor']);
     $isTechOrClient = in_array($role, ['technician', 'client', 'supervisor']);
 @endphp
 
@@ -76,7 +76,7 @@
             </a>
         </li>
 
-        {{-- ============================================= --}}
+        <!-- {{-- ============================================= --}}
         {{-- SECTION : CANAUX DE RÉCLAMATION               --}}
         {{-- ============================================= --}}
         @if($isAdmin || $isManagerOrCS)
@@ -93,7 +93,7 @@
                     @endif
                 </a>
             </li>
-        @endif
+        @endif -->
 
         {{-- ============================================= --}}
         {{-- SECTION : UTILISATEUR CONNECTÉ               --}}

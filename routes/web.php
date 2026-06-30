@@ -103,6 +103,9 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/tickets/{ticket}/assign', [TicketController::class, 'assign'])
         ->name('tickets.assign');
 
+        Route::post('/tickets/{ticket}/documents', [TicketController::class, 'storeDocument'])
+    ->name('tickets.documents.store');
+
     Route::patch('/tickets/{ticket}/start', [TicketController::class, 'start'])
         ->name('tickets.start');
 
@@ -123,6 +126,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::patch('/tickets/{ticket}/resume', [TicketController::class, 'resume'])
     ->name('tickets.resume');
+
+    Route::post('/tickets/{ticket}/resume', [TicketController::class, 'resume'])->name('tickets.resume');
     
 
     /*
@@ -130,9 +135,6 @@ Route::middleware(['auth'])->group(function () {
     */
     Route::post('/tickets/{ticket}/comments', [TicketCommentController::class, 'store'])
         ->name('tickets.comments.store');
-
-    Route::post('/tickets/{ticket}/documents', [TicketDocumentController::class, 'store'])
-        ->name('tickets.documents.store');
 
     
         Route::get('/dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');

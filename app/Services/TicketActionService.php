@@ -48,6 +48,7 @@ class TicketActionService
     // 🔥 TECHNICIAN restrictions
     if ($role === 'TECHNICIAN') {
         $actions = array_diff($actions, [
+            'hold',
             'transfer',
             'assign',
             'close',
@@ -59,7 +60,6 @@ class TicketActionService
     if ($role === 'SUPERVISOR') {
         $actions = array_diff($actions, [
             'close',
-            'reopen',
         ]);
     }
 

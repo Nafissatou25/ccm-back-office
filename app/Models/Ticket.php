@@ -157,4 +157,5 @@ public function getIsNewAttribute()
         ->where('user_id', auth()->id())
         ->exists();
 }
+
 }

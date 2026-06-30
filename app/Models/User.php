@@ -69,4 +69,9 @@ public function ticketViews()
     return $this->hasMany(TicketView::class);
 }
 
+public function tickets()
+{
+    return $this->belongsToMany(Ticket::class, 'ticket_technicians', 'user_id', 'ticket_id');
+}
+
 }
