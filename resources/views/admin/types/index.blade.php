@@ -65,13 +65,7 @@
                                         </div>
                                         <div>
                                             <div class="fw-bold">{{ $type->name }}</div>
-                                            <small class="text-muted">
-                                                @if($type->unit)
-                                                    {{ $type->unit->name }}
-                                                @else
-                                                    Aucune unité associée
-                                                @endif
-                                            </small>
+                                            
                                         </div>
                                     </div>
                                 </td>
@@ -108,8 +102,8 @@
                                             <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
                                                     onclick="return confirm('Supprimer définitivement ce type de réclamation ? Les tickets associés seront affectés.')"
                                                     title="Supprimer le type">
-                                                <i class="mdi mdi-delete me-1"></i>
-                                                Supprimer
+                                                <i class="mdi mdi-outline-danger me-1"></i>
+                                                Désactiver
                                             </button>
                                         </form>
                                     </div>

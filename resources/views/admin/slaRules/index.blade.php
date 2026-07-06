@@ -37,9 +37,9 @@
                             <th class="py-3 text-muted small fw-bold text-uppercase">
                                 <i class="mdi mdi-tag me-1"></i> Type
                             </th>
-                            <th class="py-3 text-muted small fw-bold text-uppercase text-center">
+                            <!-- <th class="py-3 text-muted small fw-bold text-uppercase text-center">
                                 <i class="mdi mdi-alert me-1"></i> Urgence
-                            </th>
+                            </th> -->
                             <th class="py-3 text-muted small fw-bold text-uppercase text-center">
                                 <i class="mdi mdi-clock-start me-1"></i> TTO
                             </th>
@@ -79,7 +79,7 @@
                                     @endif
                                 </td>
 
-                                {{-- URGENCE --}}
+                                <!-- {{-- URGENCE --}}
                                 <td class="text-center">
                                     @if($rule->is_urgent)
                                         <span class="badge bg-danger-subtle text-danger px-3 py-2 rounded-pill">
@@ -90,7 +90,7 @@
                                             <i class="mdi mdi-check-circle me-1"></i> Normal
                                         </span>
                                     @endif
-                                </td>
+                                </td> -->
 
                                 {{-- TTO (heures) --}}
                                 <td class="text-center">
@@ -136,8 +136,8 @@
                                             <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
                                                     onclick="return confirm('Supprimer définitivement cette règle SLA ?')"
                                                     title="Supprimer la règle">
-                                                <i class="mdi mdi-delete me-1"></i>
-                                                Supprimer
+                                                <i class="mdi mdi-outline-danger me-1"></i>
+                                                Désactiver
                                             </button>
                                         </form>
                                     </div>

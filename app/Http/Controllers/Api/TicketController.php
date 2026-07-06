@@ -199,15 +199,61 @@ class TicketController extends Controller
     // SHOW
     // =========================================================
     public function show(Ticket $ticket)
-    {
-        $ticket->load(['client', 'type', 'unit', 'agency', 'technicians', 'comments.user', 'documents.uploader', 'activities']);
-        $actions = TicketActionService::allowedActions($ticket, auth()->user());
-        TicketView::firstOrCreate(
-            ['ticket_id' => $ticket->id, 'user_id' => auth()->id()],
-            ['viewed_at' => now()]
-        );
-        return response()->json(['ticket' => $ticket, 'actions' => $actions]);
+{
+    // Charger les relations
+    $ticket->load([
+        'client',
+        'type',
+        'unit',
+        'agency',
+        'technicians',
+        'comments.user',
+        'documents.uploader',
+        'activities.user',  // ⬅️ Important : charger le user pour chaque activité
+    ]);
+
+    // Construire la timeline unifiée (comme dans le contrôleur web)
+    $activities = collect();
+
+    foreach ($ticket->activities as $a) {
+        $activities->push([
+            'type' => $a->type,
+            'date' => $a->created_at,
+            'data' => $a,
+        ]);
     }
+
+    foreach ($ticket->comments as $c) {
+        $activities->push([
+            'type' => 'comment',
+            'date' => $c->created_at,
+            'data' => $c,
+        ]);
+    }
+
+    foreach ($ticket->documents as $d) {
+        $activities->push([
+            'type' => 'document',
+            'date' => $d->created_at,
+            'data' => $d,
+        ]);
+    }
+
+    $activities = $activities->sortBy('date')->values();
+
+    $actions = TicketActionService::allowedActions($ticket, auth()->user());
+
+    TicketView::firstOrCreate(
+        ['ticket_id' => $ticket->id, 'user_id' => auth()->id()],
+        ['viewed_at' => now()]
+    );
+
+    return response()->json([
+        'ticket' => $ticket,
+        'actions' => $actions,
+        'activities' => $activities, // ⬅️ Ajout de la timeline unifiée
+    ]);
+}
 
     // =========================================================
     // ASSIGN (identique au web)

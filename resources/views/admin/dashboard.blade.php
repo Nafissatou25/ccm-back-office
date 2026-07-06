@@ -11,7 +11,7 @@
             <i class="mdi mdi-view-dashboard me-2 text-primary"></i>
             Tableau de bord administrateur
         </h3>
-        <small class="text-muted">Données de configuration – mise à jour en temps réel</small>
+       
     </div>
 
     {{-- CARTES STATISTIQUES --}}
@@ -79,20 +79,20 @@
             </div>
         </div>
 
-        {{-- Unités par agence --}}
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-3 h-100">
-                <div class="card-body p-3">
-                    <h6 class="fw-semibold mb-3">
-                        <i class="mdi mdi-domain me-1 text-success"></i>
-                        Unités par agence
-                    </h6>
-                    <div style="height:200px;">
-                        <canvas id="unitsByAgencyChart"></canvas>
-                    </div>
-                </div>
+        {{-- Utilisateurs par agence --}}
+<div class="col-md-4">
+    <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-body p-3">
+            <h6 class="fw-semibold mb-3">
+                <i class="mdi mdi-account-group me-1 text-primary"></i>
+                Utilisateurs par agence
+            </h6>
+            <div style="height:200px;">
+                <canvas id="usersByAgencyChart"></canvas>
             </div>
         </div>
+    </div>
+</div>
 
         {{-- Types par unité --}}
         <div class="col-md-4">
@@ -238,25 +238,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ── Unités par agence (barres) ──
-    new Chart(document.getElementById('unitsByAgencyChart'), {
-        type: 'bar',
-        data: {
-            labels: @json($agencyLabels),
-            datasets: [{
-                label: 'Unités',
-                data: @json($agencyData),
-                backgroundColor: '#36b9cc',
-                borderRadius: 4,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
-    });
+    // ── Utilisateurs par agence (barres) ──
+new Chart(document.getElementById('usersByAgencyChart'), {
+    type: 'bar',
+    data: {
+        labels: @json($agencyLabels),
+        datasets: [{
+            label: 'Utilisateurs',
+            data: @json($agencyData),
+            backgroundColor: '#36b9cc',
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+});
 
     // ── Types par unité (barres) ──
     new Chart(document.getElementById('typesByUnitChart'), {

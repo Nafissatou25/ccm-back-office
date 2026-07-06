@@ -11,18 +11,12 @@
         {{-- ============================================= --}}
         {{-- SECTION : ADMINISTRATION (admin uniquement)   --}}
         {{-- ============================================= --}}
+
         @if($isAdmin)
             <li class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.dashboard') }}">
                     <i class="mdi mdi-view-dashboard menu-icon"></i>
-                    <span class="menu-title">Dashboard</span>
-                </a>
-            </li>
-
-            <li class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('admin.users.index') }}">
-                    <i class="mdi mdi-account-group menu-icon"></i>
-                    <span class="menu-title">Utilisateurs</span>
+                    <span class="menu-title">Tableau de bord</span>
                 </a>
             </li>
 
@@ -39,6 +33,22 @@
                     <span class="menu-title">Agences</span>
                 </a>
             </li>
+
+            {{-- Entreprises sous-traitantes (admin uniquement) --}}
+    <li class="nav-item {{ request()->routeIs('admin.companies.*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.companies.index') }}">
+            <i class="mdi mdi-handshake menu-icon" style="color: #6f42c1;"></i>
+            <span class="menu-title">Entreprises</span>
+        </a>
+    </li>
+
+    <li class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('admin.users.index') }}">
+                    <i class="mdi mdi-account-group menu-icon"></i>
+                    <span class="menu-title">Utilisateurs</span>
+                </a>
+            </li>
+
 
             <li class="nav-item {{ request()->routeIs('admin.types.*') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('admin.types.index') }}">

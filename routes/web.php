@@ -5,6 +5,7 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TicketCommentController;
 use App\Http\Controllers\TicketDocumentController;
+use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\WhatsappRequestController;
 
@@ -33,6 +34,8 @@ Route::prefix('admin')
         Route::resource('agencies', \App\Http\Controllers\Admin\AgencyController::class);
         Route::resource('types', \App\Http\Controllers\Admin\TypeController::class);
         Route::resource('slaRules', \App\Http\Controllers\Admin\SlaRuleController::class);
+         Route::resource('companies', CompanyController::class)->except(['show']);
+    Route::patch('companies/{id}/restore', [CompanyController::class, 'restore'])->name('companies.restore');
 
          Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
         Route::get('/',                         [WhatsappRequestController::class, 'index'])->name('index');

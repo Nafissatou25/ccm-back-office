@@ -86,10 +86,10 @@
                                             @method('DELETE')
 
                                             <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                                                    onclick="return confirm('Supprimer définitivement cette agence ? Les utilisateurs et unités associés seront affectés.')"
-                                                    title="Supprimer l'agence">
-                                                <i class="mdi mdi-delete me-1"></i>
-                                                Supprimer
+                                                    onclick="return confirm('Désactiver définitivement cette agence ? Les utilisateurs et unités associés seront affectés.')"
+                                                    title="Désactiver l'agence">
+                                                <i class="mdi mdi-outline-danger me-1"></i>
+                                                Désactiver
                                             </button>
                                         </form>
                                     </div>

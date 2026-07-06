@@ -38,19 +38,19 @@ $usersByRole = User::with('role')
 $roleLabels = array_keys($usersByRole);
 $roleData = array_values($usersByRole);
 
-        // ── Utilisateurs par agence (remplace Unités par agence) ──
-        $usersByAgency = User::with('agency')
-            ->select('agency_id', DB::raw('count(*) as total'))
-            ->groupBy('agency_id')
-            ->get()
-            ->mapWithKeys(function ($item) {
-                $agencyName = $item->agency ? $item->agency->name : 'Sans agence';
-                return [$agencyName => $item->total];
-            })
-            ->toArray();
+        // ── Utilisateurs par agence ──
+$usersByAgency = User::with('agency')
+    ->select('agency_id', DB::raw('count(*) as total'))
+    ->groupBy('agency_id')
+    ->get()
+    ->mapWithKeys(function ($item) {
+        $agencyName = $item->agency ? $item->agency->name : 'Sans agence';
+        return [$agencyName => $item->total];
+    })
+    ->toArray();
 
-        $agencyLabels = array_keys($usersByAgency);
-        $agencyData = array_values($usersByAgency);
+$agencyLabels = array_keys($usersByAgency);
+$agencyData = array_values($usersByAgency);
 
         // ── Types par unité ──
         $typesByUnit = Type::with('unit')
