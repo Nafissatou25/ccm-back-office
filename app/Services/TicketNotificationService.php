@@ -13,6 +13,8 @@ class TicketNotificationService
     {
         $ticket->loadMissing('technicians');
         $tokens = $this->tokens($ticket->technicians);
+        \Log::info("NOTIFY ASSIGNED - Technicians:", $ticket->technicians->pluck('id')->toArray());
+        \Log::info("NOTIFY ASSIGNED - Tokens:", $tokens);
         if (empty($tokens)) return;
 
         $this->fcm->sendToTokens($tokens,

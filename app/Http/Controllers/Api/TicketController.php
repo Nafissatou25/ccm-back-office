@@ -61,6 +61,10 @@ class TicketController extends Controller
     // =========================================================
     public function store(Request $request)
     {
+        \Log::info('--- TICKET STORE ---');
+        \Log::info('Data: ', $request->all());
+        \Log::info('Files: ', $request->allFiles());
+
         $user = auth()->user();
         $role = strtolower($user->role?->name ?? '');
 
@@ -455,8 +459,9 @@ class TicketController extends Controller
             'attachment' => 'nullable|file|max:5120',
         ]);
 
-        if (!$ticket->sla_paused_at) {
-            return response()->json(['message' => 'Aucune pause SLA active'], 422);
+        // Vérifier que le ticket est bien ON_HOLD (plus souple que sla_paused_at)
+        if ($ticket->status !== 'ON_HOLD' && !$ticket->sla_paused_at) {
+            return response()->json(['message' => 'Ce ticket n\'est pas en attente'], 422);
         }
 
         $path = null;
@@ -464,16 +469,20 @@ class TicketController extends Controller
             $path = $request->file('attachment')->store('ticket-resumes', 'public');
         }
 
-        $pauseDuration = now()->diffInSeconds($ticket->sla_paused_at);
-        $newResolutionDueAt = $ticket->resolution_due_at->copy()->addSeconds($pauseDuration);
+        $updateData = [
+            'status'        => 'IN_PROGRESS',
+            'is_sla_paused' => false,
+            'sla_paused_at' => null,
+        ];
 
-        $ticket->update([
-            'status'               => 'IN_PROGRESS',
-            'resolution_due_at'    => $newResolutionDueAt,
-            'total_pause_duration' => $ticket->total_pause_duration + $pauseDuration,
-            'is_sla_paused'        => false,
-            'sla_paused_at'        => null,
-        ]);
+        // Recalculer le SLA seulement si les dates existent
+        if ($ticket->sla_paused_at && $ticket->resolution_due_at) {
+            $pauseDuration = now()->diffInSeconds($ticket->sla_paused_at);
+            $updateData['resolution_due_at'] = $ticket->resolution_due_at->copy()->addSeconds($pauseDuration);
+            $updateData['total_pause_duration'] = ($ticket->total_pause_duration ?? 0) + $pauseDuration;
+        }
+
+        $ticket->update($updateData);
 
         TicketActivity::create([
             'ticket_id'       => $ticket->id,

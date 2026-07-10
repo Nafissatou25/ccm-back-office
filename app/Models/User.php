@@ -20,7 +20,8 @@ class User extends Authenticatable
         'agency_id',
         'unit_id',
         'company_id',
-        'onesignal_player_id', 
+        'onesignal_player_id',
+        'fcm_token',
     ];
 
     protected $hidden = [

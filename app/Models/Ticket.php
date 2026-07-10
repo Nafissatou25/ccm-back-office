@@ -101,6 +101,11 @@ public function assigner()
     return $this->belongsTo(User::class, 'assigned_by');
 }
 
+public function assignedTo()
+{
+    return $this->belongsTo(User::class, 'assigned_to');
+}
+
 public function activities()
 {
     return $this->hasMany(TicketActivity::class);

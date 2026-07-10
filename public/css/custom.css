@@ -7,6 +7,7 @@
 .sidebar .sidebar-brand-wrapper {
     background: #2d2961 !important;
 }
+
 /* ===== ZONE LOGO GAUCHE ===== */
 
 .navbar-brand-wrapper,
@@ -32,14 +33,14 @@
     font-size: 1.3rem !important;
 }
 
-.sidebar .nav .nav-item.active > .nav-link {
+.sidebar .nav .nav-item.active>.nav-link {
     background: #ffffff !important;
     color: #2d2961 !important;
     border-radius: 12px;
     font-weight: 600;
 }
 
-.sidebar .nav .nav-item.active > .nav-link i {
+.sidebar .nav .nav-item.active>.nav-link i {
     color: #2d2961 !important;
 }
 
@@ -49,7 +50,8 @@
 
 .sidebar {
     position: fixed !important;
-    top: 60px; /* hauteur navbar */
+    top: 60px;
+    /* hauteur navbar */
     left: 0;
     height: calc(100vh - 70px);
     overflow-y: auto;
@@ -58,7 +60,8 @@
 
 /* Décaler le contenu principal */
 .main-panel {
-    margin-left: 220px !important; /* largeur sidebar */
+    margin-left: 220px !important;
+    /* largeur sidebar */
 }
 
 /* ==========================
@@ -67,7 +70,8 @@
 
 .page-header {
     position: sticky;
-    top: 70px; /* juste sous la navbar */
+    top: 70px;
+    /* juste sous la navbar */
     z-index: 999;
     background: #f4f5f7;
     padding: 15px 0;
@@ -110,7 +114,7 @@
 /* Navbar personnalisée */
 .default-layout {
     background: #ffffff;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     padding: 8px 0;
     min-height: 64px;
 }
@@ -153,6 +157,7 @@
     .navbar-brand-wrapper {
         flex: 1;
     }
+
     .navbar-nav.ms-auto {
         margin-top: 0.5rem;
     }
@@ -162,6 +167,7 @@
     .navbar-brand img {
         height: 32px;
     }
+
     .nav-link span {
         font-size: 0.9rem;
     }

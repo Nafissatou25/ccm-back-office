@@ -392,6 +392,13 @@ if ($client) {
         'message'   => $technicianNames,
     ]);
 
+    // ✅ Notifier les techniciens assignés via FCM
+    try {
+        app(\App\Services\TicketNotificationService::class)->notifyAssigned($ticket);
+    } catch (\Throwable $e) {
+        \Log::error('Notification assignation échouée: ' . $e->getMessage());
+    }
+
     return back()->with('success', 'Techniciens assignés avec succès');
 }
 
